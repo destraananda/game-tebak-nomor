@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tebak Nomor v10.6 - Perfect Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        :root {
+            --bg-main: #1e1b4b; --bg-dark: #000; --text-main: #f8fafc;
+            --primary: #8b5cf6; --primary-glow: rgba(139, 92, 246, 0.6);
+            --accent: #fbbf24; --success: #10b981; --danger: #ef4444;
+        }
+        body.theme-matrix { --bg-main: #022c22; --primary: #10b981; --primary-glow: rgba(16, 185, 129, 0.6); --accent: #34d399; --text-main: #ecfdf5; }
+        body.theme-cyber { --bg-main: #1e1e24; --primary: #fbbf24; --primary-glow: rgba(251, 191, 36, 0.6); --accent: #f59e0b; --text-main: #fef3c7; --danger: #f97316; }
+        
+        /* TEMA BOSS: MERAH MENYALA */
+        body.theme-boss { --bg-main: #450a0a; --primary: #ef4444; --primary-glow: rgba(239, 68, 68, 0.8); --accent: #fbbf24; --text-main: #fef2f2; --success: #10b981; }
+
+        body {
+            background: var(--bg-dark); display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; color: var(--text-main); overflow: hidden; position: relative;
+            transition: background 0.5s;
+        }
+
+        .crt-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 3px, 6px 100%; pointer-events: none; z-index: 999; box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+
+        .particle { position: absolute; background: var(--primary); border-radius: 50%; animation: floatUp linear infinite, pulseBg 2s ease-in-out infinite alternate; z-index: 0; opacity: 0.3; }
+        @keyframes floatUp { 0% { transform: translateY(100vh) scale(0); } 100% { transform: translateY(-10vh) scale(1.5); } }
+        @keyframes pulseBg { from { opacity: 0.1; } to { opacity: 0.6; } }
+
+        .flash-red { animation: flashRed 0.4s; }
+        @keyframes flashRed { 0%, 100% { background: var(--bg-dark); } 50% { background: #7f1d1d; } }
+        .flash-gold { animation: flashGold 0.5s; }
+        @keyframes flashGold { 0%, 100% { background: var(--bg-dark); } 50% { background: var(--accent); } }
+        
+        .glitch { animation: shakeHard 0.4s cubic-bezier(.36,.07,.19,.97) both; filter: drop-shadow(0 0 15px var(--danger)); }
+        @keyframes shakeHard {
+            0%, 100% { transform: translate(0, 0) rotate(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translate(-8px, 5px) rotate(-1.5deg); }
+            20%, 40%, 60%, 80% { transform: translate(8px, -5px) rotate(1.5deg); }
+        }
+
+        /* CONTAINER & ANIMASI MASUK */
+        .game-container {
+            background: var(--bg-main); border: 4px solid var(--primary);
+            box-shadow: 0 0 0 4px var(--bg-dark), 0 0 30px var(--primary-glow);
+            padding: 20px; border-radius: 10px; text-align: center; width: 420px;
+            position: relative; z-index: 10; transition: 0.5s;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+        .win-punch { animation: winPunch 0.5s ease-in-out; }
+        @keyframes winPunch { 0% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 0 50px var(--success); } 100% { transform: scale(1); } }
+
+        .game-container.boss-level { border-color: var(--danger); box-shadow: 0 0 0 4px #000, 0 0 50px var(--danger); animation: bossPulse 1s infinite; }
+        @keyframes bossPulse { 0%, 100% { box-shadow: 0 0 0 4px #000, 0 0 30px var(--danger); } 50% { box-shadow: 0 0 0 4px #000, 0 0 70px var(--danger); } }
+
+        .mascot-container { position: relative; display: inline-block; margin-bottom: 5px; }
+        #mascot { font-size: 50px; display: inline-block; animation: float 2s infinite; cursor: pointer;}
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        
+        .mascot-bounce { animation: mascotBounce 0.4s ease; }
+        @keyframes mascotBounce { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.2) translateY(-15px); } }
+
+        #speechBubble { position: absolute; top: -20px; left: 80%; background: #fff; color: #000; padding: 8px 12px; border-radius: 15px; font-size: 12px; font-weight: 700; white-space: nowrap; opacity: 0; transition: 0.3s; pointer-events: none; border: 2px solid var(--bg-dark); }
+        #speechBubble::after { content: ''; position: absolute; bottom: -8px; left: 10px; border-width: 8px 8px 0; border-style: solid; border-color: #fff transparent transparent transparent; }
+        #speechBubble.show { opacity: 1; top: -30px; transform: scale(1.1); }
+
+        /* START SCREEN */
+        #startScreen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); z-index: 20; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; border-radius: 6px;
+        }
+        #startScreen h1 { font-family: 'Press Start 2P', cursive; color: var(--accent); font-size: 22px; margin-bottom: 10px; text-align: center; line-height: 1.5; text-shadow: 2px 2px 0 #000; }
+        .stats-preview { display: flex; gap: 15px; margin-bottom: 20px; font-size: 12px; font-weight: bold; color: var(--text-main); background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; }
+        
+        h2 { font-family: 'Press Start 2P', cursive; margin: 0; color: var(--accent); font-size: 16px; line-height: 1.5; text-shadow: 2px 2px 0 #000; }
+        #rankDisplay { font-size: 12px; font-weight: 800; color: var(--accent); margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 1px;}
+        
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-weight: 700; font-size: 12px;}
+        .level-box { background: var(--primary); padding: 5px 10px; border-radius: 5px; border: 2px solid var(--bg-dark); }
+        .coins-box { background: var(--accent); color: #000; padding: 5px 10px; border-radius: 5px; border: 2px solid var(--bg-dark); cursor: pointer; transition: 0.2s; }
+        .coins-box:hover { transform: scale(1.1); }
+        
+        .stats-bar { display: flex; justify-content: space-between; background: var(--bg-dark); padding: 8px 10px; border-radius: 5px; margin-bottom: 10px; font-size: 12px; border: 2px solid #334155; }
+        .stats-bar span { color: var(--accent); font-weight: bold;}
+        
+        #timeBarContainer { width: 100%; height: 8px; background: #334155; border-radius: 5px; margin-bottom: 10px; display: none; overflow: hidden; border: 1px solid var(--bg-dark);}
+        #timeBar { height: 100%; background: var(--success); width: 100%; transition: width 0.1s linear; }
+        .time-danger { background: var(--danger) !important; animation: pulse 0.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        #lives-display { font-size: 20px; letter-spacing: 5px; margin-bottom: 10px; }
+
+        .inventory-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .inv-item { background: #334155; border: 1px solid #000; border-radius: 5px; padding: 5px 10px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px;}
+        .inv-item:hover { background: #475569; transform: translateY(-2px); }
+        .inv-item:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+        input {
+            padding: 15px; width: 100%; font-size: 22px; font-family: 'Press Start 2P', cursive;
+            border: 3px solid #475569; border-radius: 8px; text-align: center; outline: none; 
+            background: var(--bg-dark); color: var(--success); transition: all 0.3s;
+        }
+        input:focus { animation: neonGlow 1.5s infinite alternate; border-color: var(--success); }
+        @keyframes neonGlow { 0% { box-shadow: 0 0 5px var(--success), 0 0 10px var(--success); } 100% { box-shadow: 0 0 10px var(--success), 0 0 20px var(--success), 0 0 30px var(--success); } }
+
+        .hint-low { border-color: #3b82f6 !important; box-shadow: 0 0 20px #3b82f6; }
+        .hint-high { border-color: var(--danger) !important; box-shadow: 0 0 20px var(--danger); }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        
+        button {
+            background: var(--success); color: #000; border: 2px solid var(--bg-dark); padding: 10px;
+            font-size: 12px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.1s; width: 100%;
+            box-shadow: 0 4px 0 var(--bg-dark);
+        }
+        button:active { transform: translateY(4px) scaleY(0.95); box-shadow: 0 0 0 var(--bg-dark); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: translateY(4px); box-shadow: 0 0 0 var(--bg-dark); }
+        
+        .hint-btn { background: var(--accent); }
+        .shop-btn { background: #ec4899; color: white; }
+        .music-btn { background: #38bdf8; }
+        .skip-btn { background: #a855f7; color: white; }
+        .share-btn { background: #25D366; display: none; margin-top: 10px; }
+        #resetBtn { background: var(--danger); color: white; display: none; }
+
+        #pesan { margin-top: 15px; font-weight: 600; font-size: 14px; min-height: 24px; color: var(--text-main);}
+
+        .history-container { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .history-badge { background: #334155; color: #cbd5e1; padding: 4px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; border: 1px solid var(--bg-dark); animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 80% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        .history-badge.correct { background: var(--success); color: white; }
+
+        #levelUpText { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Press Start 2P', cursive; font-size: 40px; z-index: 1000; display: none; animation: popText 1s forwards, rainbowText 0.5s infinite linear; }
+        @keyframes popText { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
+        @keyframes rainbowText { 0% { color: #ff0000; text-shadow: 4px 4px 0 #000; } 20% { color: #ffff00; } 40% { color: #00ff00; } 60% { color: #00ffff; } 80% { color: #ff00ff; } 100% { color: #ff0000; } }
+
+        .floating-text { position: fixed; font-family: 'Press Start 2P', cursive; font-size: 20px; z-index: 9999; pointer-events: none; text-shadow: 2px 2px 0 #000; animation: floatUpFade 1.5s forwards ease-out; }
+        @keyframes floatUpFade { 0% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -100px) scale(1.5); } }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg-main); padding: 20px; border-radius: 10px; width: 380px; text-align: center; border: 4px solid var(--accent); max-height: 85vh; overflow-y: auto; animation: fadeInUp 0.3s ease-out;}
+        
+        .shop-tabs { display: flex; margin-bottom: 15px; gap: 5px; }
+        .shop-tab { flex: 1; background: #334155; color: white; padding: 8px 5px; border: none; box-shadow: none; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 11px; transition: 0.2s;}
+        .shop-tab.active { background: var(--accent); color: black; }
+        .shop-tab:hover:not(.active) { background: #475569; }
+
+        .shop-item { background: var(--bg-dark); padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; border: 2px solid #334155;}
+        .shop-icon { font-size: 20px; }
+        .shop-btn-buy { width: auto; padding: 5px 10px; font-size: 10px; box-shadow: 0 2px 0 var(--bg-dark);}
+        .achievement-locked { filter: grayscale(100%); opacity: 0.5; }
+
+        /* RESPONSIVE UNTUK HP */
+        @media (max-height: 750px) {
+            .game-container { transform: scale(0.85); transform-origin: center; }
+            #mascot { font-size: 40px; }
+            .stats-bar, .top-bar { margin: 5px 0; }
+            .btn-group { margin-top: 5px; }
+        }
+    </style>
+</head>
+<body id="body">
+    <div class="crt-overlay"></div>
+    <div id="levelUpText">LEVEL UP!</div>
+
+    <div class="game-container" id="gameBox">
+        
+        <div id="startScreen">
+            <h1>Tebak<br>Nomor</h1>
+            <div class="stats-preview">
+                <div>🏆 Menang: <span id="statWins">0</span></div>
+                <div>💀 Kalah: <span id="statLosses">0</span></div>
+                <div>🔥 Max Streak: <span id="statMaxStreak">0</span></div>
+            </div>
+            <button onclick="mulaiGame()" style="width: 80%; background: var(--accent);">MULAI BERMAIN</button>
+            <button onclick="bukaPencapaian()" style="width: 80%; background: #334155; color: white; margin-top:10px;">🏅 PENCAPAIAN</button>
+            <p style="font-size:10px; color:#94a3b8; margin-top:15px;">(Tekan ENTER untuk mulai)</p>
+        </div>
+
+        <div class="mascot-container">
+            <div id="mascot" onclick="clickMascot()" title="Klik aku!">🤔</div>
+            <div id="speechBubble">Halo!</div>
+        </div>
+
+        <h2 id="gameTitle">Tebak Nomor</h2>
+        <span id="rankDisplay">Noob 🐣</span>
+        
+        <div class="top-bar">
+            <div class="level-box">Lvl: <span id="levelDisplay">1</span></div>
+            <div class="coins-box" onclick="bukaToko()">🪙 <span id="coinDisplay">0</span></div>
+        </div>
+
+        <div class="stats-bar">
+            <div>⏱️ <span id="timer">0</span>s</div>
+            <div>🔥 Streak: <span id="streakDisplay">0</span></div>
+        </div>
+
+        <div id="timeBarContainer"><div id="timeBar"></div></div>
+
+        <p id="instruksi">Tebak nomor antara <strong>1 sampai 10</strong></p>
+        
+        <div id="lives-display">❤️❤️❤️</div>
+        
+        <div class="inventory-bar">
+            <button class="inv-item" id="btnTime" onclick="pakaiItem('time')" title="Tambah Waktu">⏳ x<span id="invTime">0</span></button>
+            <button class="inv-item" id="btnRange" onclick="pakaiItem('range')" title="Petunjuk Rentang">🔍 x<span id="invRange">0</span></button>
+            <button class="inv-item" id="btnWin" onclick="pakaiItem('win')" title="Instan Win">💎 x<span id="invWin">0</span></button>
+        </div>
+
+        <input type="number" id="tebakanInput" min="1" max="10" placeholder="..." autocomplete="off">
+        
+        <div class="history-container" id="history"></div>
+        
+        <div class="btn-group">
+            <button id="tebakBtn" onclick="cekTebakan()">TEBAK!</button>
+            <button id="hintBtn" class="hint-btn" onclick="beliHint()">HINT (5 🪙)</button>
+        </div>
+        
+        <div class="btn-group">
+            <button id="shopBtn" class="shop-btn" onclick="beliNyawa()">NYAWA (15 🪙)</button>
+            <button id="skipBtn" class="skip-btn" onclick="skipLevel()">SKIP (100 🪙)</button>
+        </div>
+        
+        <div class="btn-group">
+            <button class="music-btn" onclick="toggleMusic()" style="width: 50%;">🔇 MUSIK</button>
+            <button class="skip-btn" onclick="bukaLeaderboard()" style="margin-top:0; width: 50%; background:#fbbf24; color:#000;">🏆 REKOR</button>
+        </div>
+
+        <button id="resetBtn" onclick="nextOrReset()" style="margin-top: 10px;">LANJUT</button>
+        <button id="shareBtn" class="share-btn" onclick="bagikanSkor()">BAGIKAN SKOR</button>
+        
+        <p id="pesan"></p>
+    </div>
+
+    <!-- MODAL TOKO -->
+    <div class="modal" id="modalToko">
+        <div class="modal-content">
+            <h3 style="color: var(--accent); font-family: 'Press Start 2P'; font-size: 14px;">TOKO</h3>
+            <div class="shop-tabs">
+                <button class="shop-tab active" id="tabAvatar" onclick="gantiTab('avatar')">Avatar</button>
+                <button class="shop-tab" id="tabTema" onclick="gantiTab('tema')">Tema</button>
+                <button class="shop-tab" id="tabItem" onclick="gantiTab('item')">Item</button>
+            </div>
+            <div id="listToko"></div>
+            <button onclick="tutupModal('modalToko')" style="margin-top: 15px; background:var(--danger); color:white;">TUTUP</button>
+        </div>
+    </div>
+
+    <!-- MODAL LEADERBOARD -->
+    <div class="modal" id="modalLeaderboard">
+        <div class="modal-content">
+            <h3 style="color: var(--accent); font-family: 'Press Start 2P'; font-size: 14px;">HALL OF FAME</h3>
+            <div id="listLeaderboard" style="margin-top: 15px;"></div>
+            <button onclick="tutupModal('modalLeaderboard')" style="margin-top: 15px; background:var(--danger); color:white;">TUTUP</button>
+        </div>
+    </div>
+
+    <!-- MODAL PENCAPAIAN -->
+    <div class="modal" id="modalAchievement">
+        <div class="modal-content">
+            <h3 style="color: var(--accent); font-family: 'Press Start 2P'; font-size: 14px;">PENCAPAIAN</h3>
+            <div id="listAchievement" style="margin-top: 15px;"></div>
+            <button onclick="tutupModal('modalAchievement')" style="margin-top: 15px; background:var(--danger); color:white;">TUTUP</button>
+        </div>
+    </div>
+
+    <script>
+        // ==== VARIABEL GLOBAL ====
+        let level = parseInt(localStorage.getItem('saveLevel_v12')) || 1;
+        let maxNumber = 10; 
+        let nomorRahasia, kesempatan, gameSelesai = false, riwayat = [], totalTebakan = 0, isDaily = false;
+        let currentStreak = parseInt(localStorage.getItem('currentStreak_v12')) || 0;
+        let coins = parseInt(localStorage.getItem('playerCoins_v12')) || 0;
+        
+        let stats = JSON.parse(localStorage.getItem('stats_v12')) || { wins: 0, losses: 0, maxStreak: 0 };
+        let inventory = JSON.parse(localStorage.getItem('inventory_v12')) || { time: 1, range: 1, win: 0 };
+        
+        let myAvatar = localStorage.getItem('myAvatar_v12') || '🤔';
+        let currentTheme = localStorage.getItem('myTheme_v12') || 'default';
+        let ownedAvatars = JSON.parse(localStorage.getItem('ownedAvatars_v12')) || ['🤔'];
+        let ownedThemes = JSON.parse(localStorage.getItem('ownedThemes_v12')) || ['default'];
+        let achievements = JSON.parse(localStorage.getItem('achievements_v12')) || [];
+
+        let timeElapsed = 0, timerInterval, timerStarted = false;
+        let timeAttackInterval, timeLeft = 5, maxTime = 5; 
+        let isTimeAttack = false;
+        let gameAktif = false;
+        let isBossLevel = false;
+
+        // ==== ANIMASI MASKOT ====
+        function clickMascot() {
+            const mascot = document.getElementById("mascot");
+            mascot.classList.remove("mascot-bounce");
+            void mascot.offsetWidth; 
+            mascot.classList.add("mascot-bounce");
+            
+            const dialog = ["Ayo semangat!", "Kamu pasti bisa!", "Jangan menyerah!", "Tebak yang benar ya!", "Hoki hari ini!"];
+            maskotBicara(dialog[Math.floor(Math.random() * dialog.length)]);
+            
+            if(Math.random() > 0.8) bagikanSkor();
+        }
+
+        // ==== ANIMASI TEKS MELAYANG ====
+        function showFloatingText(text, color) {
+            const el = document.createElement("div");
+            el.className = "floating-text";
+            el.textContent = text;
+            el.style.color = color;
+            // Kalkulasi posisi agar tidak keluar layar
+            let leftPos = (window.innerWidth / 2) + (Math.random() * 100 - 50);
+            if(leftPos < 50) leftPos = 50;
+            if(leftPos > window.innerWidth - 50) leftPos = window.innerWidth - 50;
+            
+            el.style.left = leftPos + "px";
+            el.style.top = (window.innerHeight / 2) + "px";
+            document.body.appendChild(el);
+            
+            setTimeout(() => el.remove(), 1500);
+        }
+
+        // ==== SISTEM THEME & BOSS ====
+        function applyTheme(themeName) {
+            document.body.className = '';
+            if (themeName === 'matrix') document.body.classList.add('theme-matrix');
+            else if (themeName === 'cyber') document.body.classList.add('theme-cyber');
+        }
+
+        function checkBossLevel() {
+            isBossLevel = (level % 5 === 0);
+            const container = document.getElementById("gameBox");
+            if (isBossLevel) {
+                container.classList.add("boss-level");
+                document.body.classList.add("theme-boss"); // Tema jadi merah
+                document.getElementById("gameTitle").textContent = "👹 BOSS LEVEL 👹";
+                document.getElementById("mascot").textContent = "😡";
+                document.getElementById("instruksi").textContent = "Kalahkan Boss! Waktu lebih cepat, hadiah 3x lipat!";
+            } else {
+                container.classList.remove("boss-level");
+                applyTheme(currentTheme); // Kembalikan tema normal
+                document.getElementById("gameTitle").textContent = "Tebak Nomor";
+                document.getElementById("mascot").textContent = myAvatar;
+                document.getElementById("instruksi").innerHTML = `Tebak nomor antara <strong>1 sampai 10</strong>`;
+            }
+        }
+
+        function maskotBicara(teks) {
+            const bubble = document.getElementById("speechBubble");
+            bubble.textContent = teks; bubble.classList.add("show");
+            clearTimeout(window._bubbleTimer);
+            window._bubbleTimer = setTimeout(() => bubble.classList.remove("show"), 3000);
+        }
+
+        function cekLoginHarian() {
+            const today = new Date().toDateString();
+            const lastLogin = localStorage.getItem('lastLogin_v12');
+            if (lastLogin !== today) {
+                coins += 50; localStorage.setItem('playerCoins_v12', coins);
+                localStorage.setItem('lastLogin_v12', today);
+                setTimeout(() => {
+                    alert("🎁 BONUS LOGIN HARIAN: Kamu mendapatkan 50 Koin Gratis!");
+                    showFloatingText("+50 🪙", "var(--accent)");
+                }, 1500);
+            }
+        }
+
+        function mulaiGame() {
+            document.getElementById("startScreen").style.display = "none";
+            gameAktif = true;
+            updateCoinUI(); updateInventoryUI();
+            checkBossLevel();
+            resetGameState();
+        }
+
+        // Mendengarkan tombol ENTER di Start Screen
+        document.addEventListener('keydown', function(e) {
+            if(e.key === 'Enter' && !gameAktif) {
+                mulaiGame();
+            }
+        });
+
+        // ==== AUDIO ====
+        let audioCtx, musicInterval, isPlayingMusic = false;
+        const melody = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+        let noteIndex = 0;
+
+        function toggleMusic() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (isPlayingMusic) {
+                clearInterval(musicInterval);
+                document.querySelector('.music-btn').innerHTML = "🔇 MUSIK";
+            } else {
+                musicInterval = setInterval(playNote, 300);
+                document.querySelector('.music-btn').innerHTML = "🔊 MUSIK";
+            }
+            isPlayingMusic = !isPlayingMusic;
+        }
+
+        function playNote() {
+            if (!isPlayingMusic) return;
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'square'; osc.frequency.value = melody[noteIndex];
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+            noteIndex = (noteIndex + 1) % melody.length;
+        }
+
+        function playSFX(type) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            
+            if (type === 'win') {
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                osc.type = 'square'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                if (navigator.vibrate) navigator.vibrate(200);
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'coin') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            }
+        }
+
+        function updateRank() {
+            const rankDisplay = document.getElementById("rankDisplay");
+            if (isDaily) { rankDisplay.textContent = "Event Harian 📅"; rankDisplay.style.color = "var(--primary)"; }
+            else if (level <= 3) { rankDisplay.textContent = "Noob 🐣"; rankDisplay.style.color = "#94a3b8"; }
+            else if (level <= 7) { rankDisplay.textContent = "Pro 😎"; rankDisplay.style.color = "#38bdf8"; }
+            else if (level <= 10) { rankDisplay.textContent = "Master 🔥"; rankDisplay.style.color = "var(--danger)"; }
+            else { rankDisplay.textContent = "Legenda 👑"; rankDisplay.style.color = "var(--accent)"; }
+        }
+
+        window.onload = () => {
+            applyTheme(currentTheme); updateCoinUI(); generateParticles(); updateStreakUI();
+            document.getElementById("mascot").textContent = myAvatar;
+            document.getElementById("statWins").textContent = stats.wins;
+            document.getElementById("statLosses").textContent = stats.losses;
+            document.getElementById("statMaxStreak").textContent = stats.maxStreak;
+            cekLoginHarian();
+        };
+
+        function generateParticles() {
+            document.querySelectorAll('.particle').forEach(e => e.remove());
+            for (let i = 0; i < 25; i++) {
+                let p = document.createElement("div"); p.classList.add("particle");
+                p.style.left = Math.random() * 100 + "vw"; p.style.width = p.style.height = Math.random() * 5 + 2 + "px";
+                p.style.animationDuration = Math.random() * 10 + 5 + "s, 2s"; 
+                p.style.animationDelay = Math.random() * 5 + "s, " + Math.random() * 2 + "s";
+                document.body.appendChild(p);
+            }
+        }
+
+        function startTimer() {
+            if (timerStarted) return;
+            timerStarted = true;
+            timerInterval = setInterval(() => { timeElapsed++; document.getElementById("timer").textContent = timeElapsed; }, 1000);
+        }
+        function stopTimer() { clearInterval(timerInterval); }
+
+        function startTimeAttack() {
+            clearInterval(timeAttackInterval);
+            if(!isTimeAttack) return;
+            
+            maxTime = isBossLevel ? 3 : 5; 
+            timeLeft = maxTime;
+            const bar = document.getElementById("timeBar");
+            bar.style.width = "100%"; bar.classList.remove("time-danger");
+
+            timeAttackInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                // BUG FIX: Batasi lebar maksimal 100%
+                let persen = Math.min((timeLeft / maxTime) * 100, 100);
+                if(persen < 0) persen = 0;
+                bar.style.width = persen + "%";
+                
+                if(timeLeft <= (maxTime * 0.3)) bar.classList.add("time-danger");
+
+                if (timeLeft <= 0) {
+                    clearInterval(timeAttackInterval);
+                    waktuHabis();
+                }
+            }, 100);
+        }
+
+        function waktuHabis() {
+            if(gameSelesai) return;
+            playSFX('wrong');
+            kesempatan--; updateLivesUI();
+            document.getElementById("body").classList.add("shatter");
+            setTimeout(() => document.getElementById("body").classList.remove("shatter"), 500);
+            
+            maskotBicara("Waktu habis! Cepat sedikit dong.");
+            if(kesempatan > 0) {
+                startTimeAttack();
+            } else {
+                gameOver();
+            }
+        }
+
+        function updateCoinUI() {
+            document.getElementById("coinDisplay").textContent = coins;
+            localStorage.setItem('playerCoins_v12', coins);
+            checkAchievement('sultan');
+        }
+        function updateStreakUI() {
+            document.getElementById("streakDisplay").textContent = currentStreak;
+            localStorage.setItem('currentStreak_v12', currentStreak);
+        }
+        function updateLivesUI() {
+            const lives = document.getElementById("lives-display"); lives.innerHTML = "";
+            for(let i=0; i<kesempatan; i++) lives.innerHTML += "❤️";
+            for(let i=kesempatan; i<3; i++) lives.innerHTML += "<span style='opacity:0.3;filter:grayscale(100%)'>💔</span>";
+        }
+        function updateInventoryUI() {
+            document.getElementById("invTime").textContent = inventory.time;
+            document.getElementById("invRange").textContent = inventory.range;
+            document.getElementById("invWin").textContent = inventory.win;
+            localStorage.setItem('inventory_v12', JSON.stringify(inventory));
+        }
+
+        function pakaiItem(type) {
+            if(gameSelesai || !gameAktif) return;
+            if(inventory[type] <= 0) { tampilkanPesan("Item habis! Beli di Toko.", "var(--danger)"); return; }
+
+            if(type === 'time') {
+                if(!isTimeAttack) { tampilkanPesan("Hanya bisa dipakai di mode Time Attack!", "var(--accent)"); return; }
+                inventory.time--; updateInventoryUI(); playSFX('coin');
+                timeLeft += 3; 
+                tampilkanPesan("⏳ Waktu ditambah 3 detik!", "var(--success)");
+                maskotBicara("Legaaa... waktunya nambah!");
+            } 
+            else if(type === 'range') {
+                inventory.range--; updateInventoryUI(); playSFX('coin');
+                let rangeTeks = nomorRahasia <= 5 ? "1 sampai 5 (Bawah)" : "6 sampai 10 (Atas)";
+                tampilkanPesan(`🔍 HINT: Angka ada di rentang ${rangeTeks}`, "#38bdf8");
+                maskotBicara("Coba tebak di rentang itu!");
+            }
+            else if(type === 'win') {
+                if(confirm("Gunakan Instan Win? Kamu akan langsung menang tanpa menebak.")) {
+                    inventory.win--; updateInventoryUI(); playSFX('win');
+                    tebakanBenar(); 
+                }
+            }
+        }
+
+        function beliHint() {
+            if (gameSelesai) return;
+            if (coins < 5) { tampilkanPesan("Koin kurang! (Butuh 5)", "var(--accent)"); return; }
+            coins -= 5; updateCoinUI(); playSFX('coin');
+            let hint = nomorRahasia % 2 === 0 ? "GENAP" : "GANJIL";
+            tampilkanPesan(`💡 HINT: Angka rahasia adalah ${hint}`, "#38bdf8");
+            maskotBicara(`Psst, angkanya ${hint} lho!`);
+        }
+        function beliNyawa() {
+            if (coins < 15) { tampilkanPesan("Koin kurang! (Butuh 15)", "var(--accent)"); return; }
+            if (kesempatan >= 5) { tampilkanPesan("Nyawa maksimal!", "var(--accent)"); return; }
+            coins -= 15; updateCoinUI(); kesempatan++; updateLivesUI(); playSFX('coin');
+            tampilkanPesan("❤️ Membeli 1 Nyawa!", "var(--success)");
+        }
+        function skipLevel() {
+            if (gameSelesai) return;
+            if (coins < 100) { tampilkanPesan("Koin kurang! Butuh 100 🪙.", "var(--accent)"); return; }
+            if(confirm("Yakin mau skip level ini dengan 100 Koin?")) {
+                coins -= 100; updateCoinUI();
+                currentStreak = 0; updateStreakUI(); 
+                level++; maxNumber = 10;
+                document.getElementById("levelDisplay").textContent = level;
+                updateRank(); checkBossLevel(); showLevelUpEffect(); resetGameState();
+                tampilkanPesan("🚀 Level berhasil di-skip!", "var(--success)");
+            }
+        }
+
+        function cekTebakan() {
+            if (gameSelesai || !gameAktif) return;
+            startTimer(); totalTebakan++;
+
+            const input = document.getElementById("tebakanInput");
+            const body = document.getElementById("body");
+            const tebakan = parseInt(input.value);
+
+            input.classList.remove("hint-low", "hint-high");
+
+            if (isNaN(tebakan) || tebakan < 1 || tebakan > maxNumber) {
+                tampilkanPesan(`Masukkan angka 1 - ${maxNumber}!`, "var(--accent)"); triggerGlitch(); return;
+            }
+            if (riwayat.includes(tebakan)) {
+                tampilkanPesan(`Sudah menebak ${tebakan}!`, "var(--accent)"); triggerGlitch(); return;
+            }
+
+            riwayat.push(tebakan); renderHistory(tebakan, false);
+
+            if (tebakan === nomorRahasia) {
+                tebakanBenar();
+            } else {
+                kesempatan--; updateLivesUI(); triggerGlitch(); playSFX('wrong');
+                
+                if(kesempatan <= 0) {
+                    body.classList.add("shatter"); setTimeout(() => body.classList.remove("shatter"), 500);
+                }
+                
+                if (kesempatan === 1) document.getElementById("mascot").textContent = "🥵";
+                if (tebakan < nomorRahasia) input.classList.add("hint-low"); else input.classList.add("hint-high");
+
+                if (kesempatan > 0) {
+                    let hint = tebakan < nomorRahasia ? "KECIL ⬆️" : "BESAR ⬇️";
+                    tampilkanPesan(`Salah! Angka rahasia ${hint}.`, "var(--danger)");
+                    maskotBicara("Yah, salah. Coba lagi ya!");
+                    startTimeAttack();
+                } else {
+                    gameOver();
+                }
+            }
+            input.value = ""; input.focus(); 
+        }
+
+        function tebakanBenar() {
+            clearInterval(timeAttackInterval);
+            tampilkanPesan(`🎉 BENAR! Kamu hebat.`, "var(--success)");
+            renderHistory(nomorRahasia, true); triggerConfetti(); playSFX('win'); 
+            
+            const gameBox = document.getElementById("gameBox");
+            gameBox.classList.add("win-punch");
+            setTimeout(() => gameBox.classList.remove("win-punch"), 500);
+
+            document.getElementById("mascot").textContent = "😎";
+            maskotBicara("Yes! Tepat sekali!");
+            
+            currentStreak++; updateStreakUI();
+            if(currentStreak > stats.maxStreak) { stats.maxStreak = currentStreak; localStorage.setItem('stats_v12', JSON.stringify(stats)); }
+            
+            akhiriGame(true);
+        }
+
+        function gameOver() {
+            tampilkanPesan(`💀 Game Over! Nomornya: ${nomorRahasia}`, "var(--danger)");
+            document.getElementById("mascot").textContent = "💀"; 
+            maskotBicara("Game over... Aku ikut sedih.");
+            currentStreak = 0; updateStreakUI(); 
+            
+            stats.losses++; localStorage.setItem('stats_v12', JSON.stringify(stats));
+            
+            akhiriGame(false);
+        }
+
+        function showLevelUpEffect() {
+            const text = document.getElementById("levelUpText");
+            text.style.display = "block"; document.getElementById("body").classList.add("flash-gold");
+            setTimeout(() => { text.style.display = "none"; document.getElementById("body").classList.remove("flash-gold"); }, 1000);
+        }
+        function tampilkanPesan(teks, warna) {
+            const p = document.getElementById("pesan"); p.style.color = warna; p.textContent = teks;
+        }
+        function triggerGlitch() {
+            const gb = document.getElementById("gameBox"); 
+            gb.classList.add("glitch");
+            setTimeout(() => { 
+                gb.classList.remove("glitch"); 
+                document.getElementById("tebakanInput").classList.remove("hint-low", "hint-high"); 
+            }, 400);
+        }
+        function triggerConfetti() {
+            confetti({ particleCount: isBossLevel ? 300 : 150, spread: 80, origin: { y: 0.6 }, colors: ['#8b5cf6', '#3b82f6', '#10b981', '#fbbf24'] });
+        }
+        function renderHistory(angka, isCorrect) {
+            const c = document.getElementById("history"); const b = document.createElement("span");
+            b.className = isCorrect ? "history-badge correct" : "history-badge"; b.textContent = angka; c.appendChild(b);
+        }
+
+        function akhiriGame(isWin) {
+            gameSelesai = true; stopTimer(); clearInterval(timeAttackInterval);
+            
+            // BUG FIX: Matikan musik otomatis saat game over
+            if(isPlayingMusic) {
+                toggleMusic();
+            }
+
+            document.getElementById("tebakBtn").style.display = "none";
+            document.getElementById("hintBtn").style.display = "none";
+            document.getElementById("shopBtn").style.display = "none";
+            document.getElementById("skipBtn").style.display = "none";
+            document.getElementById("resetBtn").style.display = "block";
+            document.getElementById("shareBtn").style.display = "block";
+
+            if (isWin) {
+                stats.wins++; localStorage.setItem('stats_v12', JSON.stringify(stats));
+                
+                let reward = isBossLevel ? 30 : 10; 
+                let bonusStreak = (currentStreak >= 3) ? 10 : ((currentStreak === 2) ? 5 : 0);
+                let totalReward = reward + bonusStreak;
+                
+                coins += totalReward; updateCoinUI();
+                showFloatingText(`+${totalReward} 🪙`, "var(--accent)");
+
+                if (bonusStreak > 0) setTimeout(() => alert(`🔥 COMBO STREAK! Bonus ${bonusStreak} Koin!`), 500);
+                simpanRekor(timeElapsed);
+                
+                checkAchievement('first_win');
+                if(isBossLevel) checkAchievement('boss_slayer');
+                if(kesempatan === 1) checkAchievement('survivor');
+            }
+        }
+
+        function simpanRekor(waktu) {
+            let rekors = JSON.parse(localStorage.getItem('leaderboard_v12')) || [];
+            rekors.push(waktu); rekors.sort((a, b) => a - b); rekors = rekors.slice(0, 5);
+            localStorage.setItem('leaderboard_v12', JSON.stringify(rekors));
+        }
+
+        function nextOrReset() {
+            if (document.getElementById("mascot").textContent === "😎") {
+                level++; maxNumber = 10;
+                document.getElementById("levelDisplay").textContent = level;
+                updateRank(); checkBossLevel(); showLevelUpEffect();
+                
+                isTimeAttack = (level >= 4);
+                document.getElementById("timeBarContainer").style.display = isTimeAttack ? "block" : "none";
+                
+                resetGameState();
+            } else { resetGameState(); }
+        }
+
+        function resetGameState() {
+            nomorRahasia = Math.floor(Math.random() * maxNumber) + 1;
+            gameSelesai = false; riwayat = []; totalTebakan = 0;
+            kesempatan = 3; updateLivesUI();
+
+            stopTimer(); clearInterval(timeAttackInterval); timeElapsed = 0; timerStarted = false;
+            document.getElementById("timer").textContent = "0";
+            document.getElementById("timeBar").style.width = "100%";
+            document.getElementById("timeBar").classList.remove("time-danger");
+            
+            document.getElementById("tebakanInput").value = "";
+            document.getElementById("tebakanInput").classList.remove("hint-low", "hint-high");
+            document.getElementById("pesan").textContent = "";
+            document.getElementById("history").innerHTML = "";
+            
+            document.getElementById("tebakBtn").style.display = "block";
+            document.getElementById("hintBtn").style.display = "block";
+            document.getElementById("shopBtn").style.display = "block";
+            document.getElementById("skipBtn").style.display = "block";
+            document.getElementById("resetBtn").style.display = "none";
+            document.getElementById("shareBtn").style.display = "none";
+            
+            if(isBossLevel) document.getElementById("mascot").textContent = "😡";
+            else document.getElementById("mascot").textContent = myAvatar;
+            
+            document.getElementById("tebakanInput").focus();
+            
+            if (isTimeAttack) startTimeAttack();
+        }
+
+        function bagikanSkor() {
+            const mode = isDaily ? "Tantangan Harian" : `Level ${level} (${document.getElementById("rankDisplay").textContent})`;
+            const text = `Aku menyelesaikan ${mode} di Game Tebak Nomor v10.6 dalam waktu ${timeElapsed} detik dengan Streak ${currentStreak}! Kalahkan aku di: ${window.location.href}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function checkAchievement(id) {
+            if (achievements.includes(id)) return; 
+            
+            let unlocked = false;
+            if(id === 'sultan' && coins >= 1000) unlocked = true;
+            else if(id === 'first_win' && stats.wins >= 1) unlocked = true;
+            else if(id === 'boss_slayer' && level >= 5) unlocked = true;
+            else if(id === 'survivor' && kesempatan === 1) unlocked = true;
+            
+            if(unlocked) {
+                achievements.push(id); localStorage.setItem('achievements_v12', JSON.stringify(achievements));
+                playSFX('coin');
+                setTimeout(() => alert("🏅 PENCAPAIAN BARU TERBUKA! Cek di menu Pencapaian."), 1000);
+            }
+        }
+
+        function bukaPencapaian() {
+            document.getElementById("modalAchievement").style.display = "flex";
+            const list = document.getElementById("listAchievement"); list.innerHTML = "";
+            const semua = [
+                { id: 'first_win', icon: '🏆', nama: 'Kemenangan Pertama', desc: 'Menang 1 kali' },
+                { id: 'sultan', icon: '💰', nama: 'Sultan', desc: 'Kumpulkan 1000 Koin' },
+                { id: 'boss_slayer', icon: '👹', nama: 'Pembantai Boss', desc: 'Selesaikan Boss Level' },
+                { id: 'survivor', icon: '🩸', nama: 'Survivor', desc: 'Menang dengan sisa 1 Nyawa' }
+            ];
+            semua.forEach(p => {
+                const unlocked = achievements.includes(p.id);
+                list.innerHTML += `<div class="shop-item ${unlocked ? '' : 'achievement-locked'}" style="color:${unlocked?'var(--success)':'#fff'}">
+                    <div class="shop-icon">${p.icon}</div>
+                    <div style="flex:1; text-align:left; margin-left:10px;">
+                        <div style="font-weight:bold; font-size:14px;">${p.nama}</div>
+                        <div style="font-size:10px; color:#94a3b8;">${p.desc}</div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function tutupModal(id) { document.getElementById(id).style.display = "none"; }
+        let currentShopTab = 'avatar';
+
+        function bukaToko() {
+            document.getElementById("modalToko").style.display = "flex";
+            gantiTab(currentShopTab);
+        }
+
+        function gantiTab(tab) {
+            currentShopTab = tab;
+            document.getElementById("tabAvatar").classList.remove('active');
+            document.getElementById("tabTema").classList.remove('active');
+            document.getElementById("tabItem").classList.remove('active');
+            
+            if(tab === 'avatar') document.getElementById("tabAvatar").classList.add('active');
+            else if(tab === 'tema') document.getElementById("tabTema").classList.add('active');
+            else document.getElementById("tabItem").classList.add('active');
+
+            const list = document.getElementById("listToko"); list.innerHTML = "";
+
+            if(tab === 'avatar') {
+                const avatars = [
+                    { icon: '🤔', price: 0, name: 'Pemula' }, { icon: '😎', price: 50, name: 'Keren' },
+                    { icon: '🤖', price: 150, name: 'Robot' }, { icon: '👽', price: 300, name: 'Alien' },
+                    { icon: '🐉', price: 500, name: 'Naga' }
+                ];
+                avatars.forEach(av => {
+                    const isOwned = ownedAvatars.includes(av.icon);
+                    const isEquipped = myAvatar === av.icon;
+                    let btnText = isOwned ? (isEquipped ? "DIPAKAI" : "PAKAI") : `BELI (${av.price} 🪙)`;
+                    let btnBg = isOwned ? (isEquipped ? "#334155" : "var(--success)") : "var(--accent)";
+                    list.innerHTML += `<div class="shop-item">
+                        <div class="shop-icon">${av.icon}</div>
+                        <div style="flex:1; text-align:left; margin-left:10px; font-weight:bold; font-size:14px;">${av.name}</div>
+                        <button class="shop-btn-buy" style="background:${btnBg}" onclick="prosesAvatar('${av.icon}', ${av.price})">${btnText}</button>
+                    </div>`;
+                });
+            } 
+            else if (tab === 'tema') {
+                const themes = [
+                    { id: 'default', price: 0, name: 'Default (Ungu)' },
+                    { id: 'matrix', price: 150, name: 'Matrix (Hijau)' },
+                    { id: 'cyber', price: 250, name: 'Cyberpunk (Kuning)' }
+                ];
+                themes.forEach(th => {
+                    const isOwned = ownedThemes.includes(th.id);
+                    const isEquipped = currentTheme === th.id;
+                    let btnText = isOwned ? (isEquipped ? "DIPAKAI" : "PAKAI") : `BELI (${th.price} 🪙)`;
+                    let btnBg = isOwned ? (isEquipped ? "#334155" : "var(--success)") : "var(--accent)";
+                    list.innerHTML += `<div class="shop-item">
+                        <div style="flex:1; text-align:left; font-weight:bold; font-size:14px;">${th.name}</div>
+                        <button class="shop-btn-buy" style="background:${btnBg}" onclick="prosesTema('${th.id}', ${th.price})">${btnText}</button>
+                    </div>`;
+                });
+            }
+            else {
+                const items = [
+                    { id: 'time', icon: '⏳', price: 20, name: 'Beli Waktu (+3s)' },
+                    { id: 'range', icon: '🔍', price: 30, name: 'Petunjuk Rentang' },
+                    { id: 'win', icon: '💎', price: 500, name: 'Instan Win' }
+                ];
+                items.forEach(it => {
+                    list.innerHTML += `<div class="shop-item">
+                        <div class="shop-icon">${it.icon}</div>
+                        <div style="flex:1; text-align:left; margin-left:10px; font-weight:bold; font-size:14px;">${it.name}</div>
+                        <button class="shop-btn-buy" style="background:var(--success)" onclick="beliItem('${it.id}', ${it.price})">BELI (${it.price} 🪙)</button>
+                    </div>`;
+                });
+            }
+        }
+
+        function prosesAvatar(icon, price) {
+            if (ownedAvatars.includes(icon)) {
+                myAvatar = icon; localStorage.setItem('myAvatar_v12', icon);
+                document.getElementById("mascot").textContent = myAvatar;
+                gantiTab('avatar');
+            } else {
+                if (coins >= price) {
+                    if(confirm(`Beli avatar ini seharga ${price} koin?`)) {
+                        coins -= price; updateCoinUI();
+                        ownedAvatars.push(icon); localStorage.setItem('ownedAvatars_v12', JSON.stringify(ownedAvatars));
+                        myAvatar = icon; localStorage.setItem('myAvatar_v12', icon);
+                        document.getElementById("mascot").textContent = myAvatar;
+                        playSFX('coin'); alert("✅ Avatar dibeli!"); gantiTab('avatar');
+                    }
+                } else alert("❌ Koin tidak cukup!");
+            }
+        }
+
+        function prosesTema(id, price) {
+            if (ownedThemes.includes(id)) {
+                currentTheme = id; localStorage.setItem('myTheme_v12', id);
+                applyTheme(currentTheme); gantiTab('tema');
+            } else {
+                if (coins >= price) {
+                    if(confirm(`Beli tema ini seharga ${price} koin?`)) {
+                        coins -= price; updateCoinUI();
+                        ownedThemes.push(id); localStorage.setItem('ownedThemes_v12', JSON.stringify(ownedThemes));
+                        currentTheme = id; localStorage.setItem('myTheme_v12', id);
+                        applyTheme(currentTheme); playSFX('coin'); alert("✅ Tema dibeli!"); gantiTab('tema');
+                    }
+                } else alert("❌ Koin tidak cukup!");
+            }
+        }
+
+        function beliItem(id, price) {
+            if (coins >= price) {
+                if(confirm(`Beli item ini seharga ${price} koin?`)) {
+                    coins -= price; updateCoinUI();
+                    inventory[id]++; updateInventoryUI();
+                    playSFX('coin'); alert("✅ Item dibeli dan masuk ke tas!");
+                }
+            } else alert("❌ Koin tidak cukup!");
+        }
+
+        function bukaLeaderboard() {
+            document.getElementById("modalLeaderboard").style.display = "flex";
+            const list = document.getElementById("listLeaderboard"); list.innerHTML = "";
+            let rekors = JSON.parse(localStorage.getItem('leaderboard_v12')) || [];
+            
+            if(rekors.length === 0) {
+                list.innerHTML = "<p style='color:#94a3b8'>Belum ada rekor. Ayo bermain!</p>";
+            } else {
+                rekors.forEach((waktu, index) => {
+                    let medali = index === 0 ? "🥇" : (index === 1 ? "🥈" : (index === 2 ? "🥉" : "🏅"));
+                    list.innerHTML += `<div class="shop-item">
+                        <div style="font-size:20px;">${medali}</div>
+                        <div style="flex:1; text-align:left; margin-left:15px; font-weight:bold; font-size:16px;">Peringkat ${index + 1}</div>
+                        <div style="color:var(--accent); font-weight:bold;">${waktu} Detik</div>
+                    </div>`;
+                });
+            }
+        }
+
+        document.getElementById("tebakanInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") { event.preventDefault(); cekTebakan(); }
+        });
+    </script>
+</body>
+</html>
