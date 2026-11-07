@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Tebak Nomor v11.0 - Lucky Spin</title>
+    <title>Game Kuis Tebak-Tebakan v12.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -52,6 +52,7 @@
             padding: 20px; border-radius: 10px; text-align: center; width: 420px;
             position: relative; z-index: 10; transition: 0.5s;
             animation: fadeInUp 0.8s ease-out;
+            max-height: 95vh; overflow-y: auto;
         }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -68,7 +69,7 @@
         .mascot-bounce { animation: mascotBounce 0.4s ease; }
         @keyframes mascotBounce { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.2) translateY(-15px); } }
 
-        #speechBubble { position: absolute; top: -20px; left: 80%; background: #fff; color: #000; padding: 8px 12px; border-radius: 15px; font-size: 12px; font-weight: 700; white-space: nowrap; opacity: 0; transition: 0.3s; pointer-events: none; border: 2px solid var(--bg-dark); }
+        #speechBubble { position: absolute; top: -20px; left: 80%; background: #fff; color: #000; padding: 8px 12px; border-radius: 15px; font-size: 12px; font-weight: 700; white-space: nowrap; opacity: 0; transition: 0.3s; pointer-events: none; border: 2px solid var(--bg-dark); z-index: 20;}
         #speechBubble::after { content: ''; position: absolute; bottom: -8px; left: 10px; border-width: 8px 8px 0; border-style: solid; border-color: #fff transparent transparent transparent; }
         #speechBubble.show { opacity: 1; top: -30px; transform: scale(1.1); }
 
@@ -76,10 +77,10 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); z-index: 20; display: flex; flex-direction: column;
             justify-content: center; align-items: center; border-radius: 6px;
         }
-        #startScreen h1 { font-family: 'Press Start 2P', cursive; color: var(--accent); font-size: 22px; margin-bottom: 10px; text-align: center; line-height: 1.5; text-shadow: 2px 2px 0 #000; }
+        #startScreen h1 { font-family: 'Press Start 2P', cursive; color: var(--accent); font-size: 20px; margin-bottom: 10px; text-align: center; line-height: 1.5; text-shadow: 2px 2px 0 #000; }
         .stats-preview { display: flex; gap: 15px; margin-bottom: 20px; font-size: 12px; font-weight: bold; color: var(--text-main); background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; }
         
-        h2 { font-family: 'Press Start 2P', cursive; margin: 0; color: var(--accent); font-size: 16px; line-height: 1.5; text-shadow: 2px 2px 0 #000; }
+        h2 { font-family: 'Press Start 2P', cursive; margin: 0; color: var(--accent); font-size: 14px; line-height: 1.5; text-shadow: 2px 2px 0 #000; }
         #rankDisplay { font-size: 12px; font-weight: 800; color: var(--accent); margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 1px;}
         
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-weight: 700; font-size: 12px;}
@@ -102,16 +103,20 @@
         .inv-item:hover { background: #475569; transform: translateY(-2px); }
         .inv-item:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
-        input {
-            padding: 15px; width: 100%; font-size: 22px; font-family: 'Press Start 2P', cursive;
-            border: 3px solid #475569; border-radius: 8px; text-align: center; outline: none; 
-            background: var(--bg-dark); color: var(--success); transition: all 0.3s;
+        /* KUIS STYLE */
+        #questionText { font-size: 16px; font-weight: 700; color: #fff; margin: 15px 0; min-height: 50px; line-height: 1.4; text-align: left; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent);}
+        
+        .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        .option-btn { 
+            background: #334155; color: white; padding: 12px 15px; border-radius: 8px; border: 2px solid var(--bg-dark); 
+            text-align: left; font-size: 14px; cursor: pointer; transition: 0.2s; font-weight: 600;
+            box-shadow: 0 2px 0 var(--bg-dark); display: flex; align-items: center; gap: 10px;
         }
-        input:focus { animation: neonGlow 1.5s infinite alternate; border-color: var(--success); }
-        @keyframes neonGlow { 0% { box-shadow: 0 0 5px var(--success), 0 0 10px var(--success); } 100% { box-shadow: 0 0 10px var(--success), 0 0 20px var(--success), 0 0 30px var(--success); } }
-
-        .hint-low { border-color: #3b82f6 !important; box-shadow: 0 0 20px #3b82f6; }
-        .hint-high { border-color: var(--danger) !important; box-shadow: 0 0 20px var(--danger); }
+        .option-btn:hover:not(:disabled) { background: #475569; transform: translateX(5px); }
+        .option-btn:disabled { opacity: 0.7; cursor: not-allowed; box-shadow: 0 0 0 var(--bg-dark); transform: translateY(2px); }
+        .option-btn.correct { background: var(--success); color: black; border-color: #000; }
+        .option-btn.wrong { background: var(--danger); color: white; border-color: #000; }
+        .option-btn.hidden-5050 { opacity: 0; pointer-events: none; }
 
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
         
@@ -132,11 +137,6 @@
         #resetBtn { background: var(--danger); color: white; display: none; }
 
         #pesan { margin-top: 15px; font-weight: 600; font-size: 14px; min-height: 24px; color: var(--text-main);}
-
-        .history-container { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-        .history-badge { background: #334155; color: #cbd5e1; padding: 4px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; border: 1px solid var(--bg-dark); animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 80% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
-        .history-badge.correct { background: var(--success); color: white; }
 
         #levelUpText { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Press Start 2P', cursive; font-size: 40px; z-index: 1000; display: none; animation: popText 1s forwards, rainbowText 0.5s infinite linear; }
         @keyframes popText { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
@@ -163,33 +163,15 @@
         .wheel { 
             width: 100%; height: 100%; border-radius: 50%; border: 5px solid var(--accent); 
             background: conic-gradient(
-                var(--danger) 0deg 45deg, 
-                var(--success) 45deg 90deg, 
-                var(--primary) 90deg 135deg, 
-                #f97316 135deg 180deg, 
-                #06b6d4 180deg 225deg, 
-                #ec4899 225deg 270deg, 
-                #eab308 270deg 315deg, 
-                #64748b 315deg 360deg
+                var(--danger) 0deg 45deg, var(--success) 45deg 90deg, var(--primary) 90deg 135deg, #f97316 135deg 180deg, 
+                #06b6d4 180deg 225deg, #ec4899 225deg 270deg, #eab308 270deg 315deg, #64748b 315deg 360deg
             );
             transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
             box-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
-        .wheel-text {
-            position: absolute; top: 50%; left: 50%; width: 50%; height: 20px;
-            transform-origin: left center; font-size: 10px; font-weight: bold; color: white;
-            display: flex; align-items: center; padding-left: 20px; text-shadow: 1px 1px 2px #000;
-        }
-        .wheel-pointer {
-            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
-            width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid var(--accent);
-            z-index: 5; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-        }
-        .spin-center {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 40px; height: 40px; background: var(--bg-dark); border: 3px solid var(--accent); border-radius: 50%;
-            z-index: 4; display: flex; justify-content: center; align-items: center; font-size: 16px;
-        }
+        .wheel-text { position: absolute; top: 50%; left: 50%; width: 50%; height: 20px; transform-origin: left center; font-size: 10px; font-weight: bold; color: white; display: flex; align-items: center; padding-left: 20px; text-shadow: 1px 1px 2px #000; }
+        .wheel-pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid var(--accent); z-index: 5; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .spin-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: var(--bg-dark); border: 3px solid var(--accent); border-radius: 50%; z-index: 4; display: flex; justify-content: center; align-items: center; font-size: 16px; }
 
         @media (max-height: 750px) {
             .game-container { transform: scale(0.85); transform-origin: center; }
@@ -210,7 +192,7 @@
     <div class="game-container" id="gameBox">
         
         <div id="startScreen">
-            <h1>Tebak<br>Nomor</h1>
+            <h1>Kuis<br>Tebak-Tebakan</h1>
             <div class="stats-preview">
                 <div>🏆 Menang: <span id="statWins">0</span></div>
                 <div>💀 Kalah: <span id="statLosses">0</span></div>
@@ -226,7 +208,7 @@
             <div id="speechBubble">Halo!</div>
         </div>
 
-        <h2 id="gameTitle">Tebak Nomor</h2>
+        <h2 id="gameTitle">Kuis Tebak-Tebakan</h2>
         <span id="rankDisplay">Noob 🐣</span>
         
         <div class="top-bar">
@@ -241,22 +223,21 @@
 
         <div id="timeBarContainer"><div id="timeBar"></div></div>
 
-        <p id="instruksi">Tebak nomor antara <strong>1 sampai 10</strong></p>
+        <!-- KUIS AREA -->
+        <div id="questionText">Loading pertanyaan...</div>
+        <div class="options-grid" id="optionsContainer">
+            <!-- Opsi A, B, C, D akan di-generate JS -->
+        </div>
         
         <div id="lives-display">❤️❤️❤️</div>
         
         <div class="inventory-bar">
             <button class="inv-item" id="btnTime" onclick="pakaiItem('time')" title="Tambah Waktu">⏳ x<span id="invTime">0</span></button>
-            <button class="inv-item" id="btnRange" onclick="pakaiItem('range')" title="Petunjuk Rentang">🔍 x<span id="invRange">0</span></button>
+            <button class="inv-item" id="btnRange" onclick="pakaiItem('range')" title="50:50 (Hapus 2 jawaban salah)">🎯 x<span id="invRange">0</span></button>
             <button class="inv-item" id="btnWin" onclick="pakaiItem('win')" title="Instan Win">💎 x<span id="invWin">0</span></button>
         </div>
-
-        <input type="number" id="tebakanInput" min="1" max="10" placeholder="..." autocomplete="off">
-        
-        <div class="history-container" id="history"></div>
         
         <div class="btn-group">
-            <button id="tebakBtn" onclick="cekTebakan()">TEBAK!</button>
             <button id="hintBtn" class="hint-btn" onclick="beliHint()">HINT (5 🪙)</button>
         </div>
         
@@ -314,15 +295,11 @@
         <div class="modal-content" style="width: 320px;">
             <h3 style="color: var(--accent); font-family: 'Press Start 2P'; font-size: 14px;">LUCKY SPIN</h3>
             <p style="font-size: 12px; margin-top:5px;">Biaya: 50 🪙</p>
-            
             <div class="wheel-container">
                 <div class="wheel-pointer"></div>
                 <div class="spin-center">🎰</div>
-                <div class="wheel" id="wheel">
-                    <!-- Text akan di-generate oleh JS -->
-                </div>
+                <div class="wheel" id="wheel"></div>
             </div>
-
             <button id="btnSpinAction" onclick="spinWheel()" style="background: var(--accent); color: black; margin-top:10px;">PUTAR RODA!</button>
             <button onclick="tutupModal('modalSpin')" style="margin-top: 10px; background:var(--danger); color:white;">TUTUP</button>
         </div>
@@ -330,27 +307,52 @@
 
     <script>
         // ==== VARIABEL GLOBAL ====
-        let level = parseInt(localStorage.getItem('saveLevel_v12')) || 1;
-        let maxNumber = 10; 
-        let nomorRahasia, kesempatan, gameSelesai = false, riwayat = [], totalTebakan = 0, isDaily = false;
-        let currentStreak = parseInt(localStorage.getItem('currentStreak_v12')) || 0;
-        let coins = parseInt(localStorage.getItem('playerCoins_v12')) || 0;
+        let level = parseInt(localStorage.getItem('saveLevel_v13')) || 1;
+        let currentQuestion, kesempatan, gameSelesai = false, riwayat = [], totalTebakan = 0, isDaily = false;
+        let currentStreak = parseInt(localStorage.getItem('currentStreak_v13')) || 0;
+        let coins = parseInt(localStorage.getItem('playerCoins_v13')) || 0;
         
-        let stats = JSON.parse(localStorage.getItem('stats_v12')) || { wins: 0, losses: 0, maxStreak: 0 };
-        let inventory = JSON.parse(localStorage.getItem('inventory_v12')) || { time: 1, range: 1, win: 0 };
+        let stats = JSON.parse(localStorage.getItem('stats_v13')) || { wins: 0, losses: 0, maxStreak: 0 };
+        let inventory = JSON.parse(localStorage.getItem('inventory_v13')) || { time: 1, range: 1, win: 0 };
         
-        let myAvatar = localStorage.getItem('myAvatar_v12') || '🤔';
-        let currentTheme = localStorage.getItem('myTheme_v12') || 'default';
-        let ownedAvatars = JSON.parse(localStorage.getItem('ownedAvatars_v12')) || ['🤔'];
-        let ownedThemes = JSON.parse(localStorage.getItem('ownedThemes_v12')) || ['default'];
-        let achievements = JSON.parse(localStorage.getItem('achievements_v12')) || [];
+        let myAvatar = localStorage.getItem('myAvatar_v13') || '🤔';
+        let currentTheme = localStorage.getItem('myTheme_v13') || 'default';
+        let ownedAvatars = JSON.parse(localStorage.getItem('ownedAvatars_v13')) || ['🤔'];
+        let ownedThemes = JSON.parse(localStorage.getItem('ownedThemes_v13')) || ['default'];
+        let achievements = JSON.parse(localStorage.getItem('achievements_v13')) || [];
 
         let timeElapsed = 0, timerInterval, timerStarted = false;
-        let timeAttackInterval, timeLeft = 5, maxTime = 5; 
+        let timeAttackInterval, timeLeft = 10, maxTime = 10; 
         let isTimeAttack = false;
         let gameAktif = false;
         let isBossLevel = false;
         let isSpinning = false;
+        let answerLocked = false;
+
+        // ==== BANK SOAL TEBAK-TEBAKAN ====
+        const questions = [
+            { q: "Bapaknya bernama Budi, anaknya bernama...", o: ["Budo", "Buda", "Bidi", "Bede"], a: 0 },
+            { q: "Hewan apa yang paling kaya?", o: ["Kucing", "Beruang", "Semut", "Cicak"], a: 1 },
+            { q: "Benda mana yang lebih berat: 1 kg kapas atau 1 kg besi?", o: ["Kapas", "Besi", "Sama Saja", "Tergantung"], a: 2 },
+            { q: "Ayam apa yang paling besar?", o: ["Ayam Kampung", "Ayam Bangkok", "Ayam Kalkun", "Ayam Kampus"], a: 3 },
+            { q: "Kopi apa yang tidak bisa diminum?", o: ["Kopi Luwak", "Kopi Susu", "Kopi Pahit", "Kopiah"], a: 3 },
+            { q: "Ikan apa yang matanya banyak?", o: ["Ikan Tongkol", "Ikan Teri", "Ikan Hiu", "Ikan Sepat"], a: 1 },
+            { q: "Apa yang punya kaki tapi tidak bisa jalan?", o: ["Meja", "Kursi", "Lemari", "Semua Benar"], a: 3 },
+            { q: "Bebek apa yang bisa terbang tinggi?", o: ["Bebek Goreng", "Bebek Beijing", "Bebek Peking", "Bebek Terbang"], a: 3 },
+            { q: "Siapa yang selalu berjalan tapi tidak pernah sampai?", o: ["Waktu", "Kura-kura", "Siput", "Kereta"], a: 0 },
+            { q: "Buah apa yang tidak pernah bohong?", o: ["Mangga", "Jujube", "Jambu", "Pisang"], a: 2 },
+            { q: "Kunci apa yang tidak bisa membuka pintu?", o: ["Kunci Inggris", "Kunci Gitar", "Kunci Motor", "Kunci Rumah"], a: 1 },
+            { q: "Apa yang naik tapi tidak pernah turun?", o: ["Umur", "Balon", "Pesawat", "Lift"], a: 0 },
+            { q: "Bola apa yang bisa dimakan?", o: ["Bola Kasti", "Bola Ubi", "Bola Bakso", "Bola Sepak"], a: 2 },
+            { q: "Hewan apa yang jalannya paling lambat?", o: ["Siput", "Kura-kura", "Cacing", "Semut"], a: 0 },
+            { q: "Apa yang dipakai di kepala tapi bukan topi?", o: ["Rambut", "Kutu", "Pusing", "Bantal"], a: 0 },
+            { q: "Mobil apa yang paling cepat?", o: ["Mobil Balap", "Mobil F1", "Mobil Tua", "Mobil Rusak"], a: 1 },
+            { q: "Sayur apa yang jadi bahan dasar kue?", o: ["Wortel", "Kentang", "Bayam", "Labu"], a: 1 },
+            { q: "Pisang apa yang bikin ngantuk?", o: ["Pisang Ambon", "Pisang Molen", "Pisang Tidur", "Pisang Susu"], a: 2 },
+            { q: "Apa yang selalu di depanmu tapi tidak bisa kamu lihat?", o: ["Masa Depan", "Bayangan", "Angin", "Cermin"], a: 0 },
+            { q: "Sapi apa yang bisa nempel di dinding?", o: ["Sapi Terbang", "Sapi Lempeng", "Sapi Pintar", "Sapi Magnet"], a: 1 }
+        ];
+        let availableQuestions = [];
 
         // ==== LUCKY SPIN DATA ====
         const spinPrizes = [
@@ -388,7 +390,7 @@
             void mascot.offsetWidth; 
             mascot.classList.add("mascot-bounce");
             
-            const dialog = ["Ayo semangat!", "Kamu pasti bisa!", "Jangan menyerah!", "Tebak yang benar ya!", "Hoki hari ini!", "Coba Spin dong!"];
+            const dialog = ["Ayo semangat!", "Pikirkan baik-baik!", "Jangan menyerah!", "Kamu pasti tahu jawabannya!", "Hoki hari ini!", "Coba Spin dong!"];
             maskotBicara(dialog[Math.floor(Math.random() * dialog.length)]);
             
             if(Math.random() > 0.8) bagikanSkor();
@@ -403,11 +405,8 @@
             let leftPos = (window.innerWidth / 2) + (Math.random() * 100 - 50);
             if(leftPos < 50) leftPos = 50;
             if(leftPos > window.innerWidth - 50) leftPos = window.innerWidth - 50;
-            
-            el.style.left = leftPos + "px";
-            el.style.top = (window.innerHeight / 2) + "px";
+            el.style.left = leftPos + "px"; el.style.top = (window.innerHeight / 2) + "px";
             document.body.appendChild(el);
-            
             setTimeout(() => el.remove(), 1500);
         }
 
@@ -424,15 +423,13 @@
             if (isBossLevel) {
                 container.classList.add("boss-level");
                 document.body.classList.add("theme-boss");
-                document.getElementById("gameTitle").textContent = "👹 BOSS LEVEL 👹";
+                document.getElementById("gameTitle").textContent = "👹 BOSS KUIS 👹";
                 document.getElementById("mascot").textContent = "😡";
-                document.getElementById("instruksi").textContent = "Kalahkan Boss! Waktu lebih cepat, hadiah 3x lipat!";
             } else {
                 container.classList.remove("boss-level");
                 applyTheme(currentTheme); 
-                document.getElementById("gameTitle").textContent = "Tebak Nomor";
+                document.getElementById("gameTitle").textContent = "Kuis Tebak-Tebakan";
                 document.getElementById("mascot").textContent = myAvatar;
-                document.getElementById("instruksi").innerHTML = `Tebak nomor antara <strong>1 sampai 10</strong>`;
             }
         }
 
@@ -445,10 +442,10 @@
 
         function cekLoginHarian() {
             const today = new Date().toDateString();
-            const lastLogin = localStorage.getItem('lastLogin_v12');
+            const lastLogin = localStorage.getItem('lastLogin_v13');
             if (lastLogin !== today) {
-                coins += 50; localStorage.setItem('playerCoins_v12', coins);
-                localStorage.setItem('lastLogin_v12', today);
+                coins += 50; localStorage.setItem('playerCoins_v13', coins);
+                localStorage.setItem('lastLogin_v13', today);
                 setTimeout(() => {
                     alert("🎁 BONUS LOGIN HARIAN: Kamu mendapatkan 50 Koin Gratis!");
                     showFloatingText("+50 🪙", "var(--accent)");
@@ -461,8 +458,8 @@
             gameAktif = true;
             updateCoinUI(); updateInventoryUI();
             checkBossLevel();
-            resetGameState();
             initWheel();
+            resetGameState();
         }
 
         document.addEventListener('keydown', function(e) {
@@ -471,7 +468,7 @@
             }
         });
 
-        // ==== SFX (EFEK SUARA KLIK) ====
+        // ==== SFX (EFEK SUARA) ====
         function playSFX(type) {
             let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
@@ -498,11 +495,10 @@
 
         function updateRank() {
             const rankDisplay = document.getElementById("rankDisplay");
-            if (isDaily) { rankDisplay.textContent = "Event Harian 📅"; rankDisplay.style.color = "var(--primary)"; }
-            else if (level <= 3) { rankDisplay.textContent = "Noob 🐣"; rankDisplay.style.color = "#94a3b8"; }
-            else if (level <= 7) { rankDisplay.textContent = "Pro 😎"; rankDisplay.style.color = "#38bdf8"; }
-            else if (level <= 10) { rankDisplay.textContent = "Master 🔥"; rankDisplay.style.color = "var(--danger)"; }
-            else { rankDisplay.textContent = "Legenda 👑"; rankDisplay.style.color = "var(--accent)"; }
+            if (level <= 3) { rankDisplay.textContent = "Pemula 🐣"; rankDisplay.style.color = "#94a3b8"; }
+            else if (level <= 7) { rankDisplay.textContent = "Cerdas 😎"; rankDisplay.style.color = "#38bdf8"; }
+            else if (level <= 10) { rankDisplay.textContent = "Jenius 🔥"; rankDisplay.style.color = "var(--danger)"; }
+            else { rankDisplay.textContent = "Profesor 👑"; rankDisplay.style.color = "var(--accent)"; }
         }
 
         window.onload = () => {
@@ -512,6 +508,8 @@
             document.getElementById("statLosses").textContent = stats.losses;
             document.getElementById("statMaxStreak").textContent = stats.maxStreak;
             cekLoginHarian();
+            // Siapkan bank soal
+            availableQuestions = [...questions];
         };
 
         function generateParticles() {
@@ -532,11 +530,78 @@
         }
         function stopTimer() { clearInterval(timerInterval); }
 
+        // ==== KUIS LOGIC ====
+        function loadQuestion() {
+            if (availableQuestions.length === 0) {
+                availableQuestions = [...questions]; // Isi ulang jika habis
+            }
+            
+            // Ambil soal acak
+            const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+            currentQuestion = availableQuestions.splice(randomIndex, 1)[0];
+
+            document.getElementById("questionText").textContent = currentQuestion.q;
+            const container = document.getElementById("optionsContainer");
+            container.innerHTML = "";
+
+            // Buat tombol opsi
+            const huruf = ["A", "B", "C", "D"];
+            currentQuestion.o.forEach((opt, index) => {
+                const btn = document.createElement("button");
+                btn.className = "option-btn";
+                btn.innerHTML = `<strong>${huruf[index]}.</strong> ${opt}`;
+                btn.onclick = () => pilihJawaban(index, btn);
+                container.appendChild(btn);
+            });
+
+            answerLocked = false;
+            document.getElementById("pesan").textContent = "";
+        }
+
+        function pilihJawaban(index, btnElement) {
+            if (answerLocked || gameSelesai) return;
+            answerLocked = true;
+            startTimer();
+
+            const allBtns = document.querySelectorAll(".option-btn");
+            allBtns.forEach(b => b.disabled = true);
+
+            if (index === currentQuestion.a) {
+                // BENAR
+                btnElement.classList.add("correct");
+                playSFX('win');
+                document.getElementById("mascot").textContent = "😎";
+                maskotBicara("Yes! Tepat sekali!");
+                setTimeout(tebakanBenar, 800);
+            } else {
+                // SALAH
+                btnElement.classList.add("wrong");
+                allBtns[currentQuestion.a].classList.add("correct"); // Tunjukkan yang benar
+                playSFX('wrong');
+                document.getElementById("mascot").textContent = "💀";
+                maskotBicara("Yah, salah. Jawabannya yang hijau itu lho.");
+                setTimeout(kesempatanHabis, 1200);
+            }
+        }
+
+        function kesempatanHabis() {
+            kesempatan--; updateLivesUI();
+            document.getElementById("body").classList.add("shatter");
+            setTimeout(() => document.getElementById("body").classList.remove("shatter"), 500);
+            
+            if(kesempatan > 0) {
+                startTimeAttack();
+                loadQuestion(); // Lanjut soal baru
+            } else {
+                gameOver();
+            }
+        }
+
         function startTimeAttack() {
             clearInterval(timeAttackInterval);
             if(!isTimeAttack) return;
             
-            maxTime = isBossLevel ? 3 : 5; 
+            maxTime = isBossLevel ? 7 : 15; // Waktu menjawab (Boss lebih cepat)
             timeLeft = maxTime;
             const bar = document.getElementById("timeBar");
             bar.style.width = "100%"; bar.classList.remove("time-danger");
@@ -557,28 +622,26 @@
         }
 
         function waktuHabis() {
-            if(gameSelesai) return;
+            if(gameSelesai || answerLocked) return;
+            answerLocked = true;
             playSFX('wrong');
-            kesempatan--; updateLivesUI();
-            document.getElementById("body").classList.add("shatter");
-            setTimeout(() => document.getElementById("body").classList.remove("shatter"), 500);
+            maskotBicara("Waktu habis! Kamu terlalu lama mikir.");
             
-            maskotBicara("Waktu habis! Cepat sedikit dong.");
-            if(kesempatan > 0) {
-                startTimeAttack();
-            } else {
-                gameOver();
-            }
+            const allBtns = document.querySelectorAll(".option-btn");
+            allBtns.forEach(b => b.disabled = true);
+            allBtns[currentQuestion.a].classList.add("correct");
+
+            setTimeout(kesempatanHabis, 1200);
         }
 
         function updateCoinUI() {
             document.getElementById("coinDisplay").textContent = coins;
-            localStorage.setItem('playerCoins_v12', coins);
+            localStorage.setItem('playerCoins_v13', coins);
             checkAchievement('sultan');
         }
         function updateStreakUI() {
             document.getElementById("streakDisplay").textContent = currentStreak;
-            localStorage.setItem('currentStreak_v12', currentStreak);
+            localStorage.setItem('currentStreak_v13', currentStreak);
         }
         function updateLivesUI() {
             const lives = document.getElementById("lives-display"); lives.innerHTML = "";
@@ -589,28 +652,37 @@
             document.getElementById("invTime").textContent = inventory.time;
             document.getElementById("invRange").textContent = inventory.range;
             document.getElementById("invWin").textContent = inventory.win;
-            localStorage.setItem('inventory_v12', JSON.stringify(inventory));
+            localStorage.setItem('inventory_v13', JSON.stringify(inventory));
         }
 
         function pakaiItem(type) {
-            if(gameSelesai || !gameAktif) return;
+            if(gameSelesai || !gameAktif || answerLocked) return;
             if(inventory[type] <= 0) { tampilkanPesan("Item habis! Beli di Toko.", "var(--danger)"); return; }
 
             if(type === 'time') {
                 if(!isTimeAttack) { tampilkanPesan("Hanya bisa dipakai di mode Time Attack!", "var(--accent)"); return; }
                 inventory.time--; updateInventoryUI(); playSFX('coin');
-                timeLeft += 3; 
-                tampilkanPesan("⏳ Waktu ditambah 3 detik!", "var(--success)");
+                timeLeft += 5; 
+                tampilkanPesan("⏳ Waktu ditambah 5 detik!", "var(--success)");
                 maskotBicara("Legaaa... waktunya nambah!");
             } 
-            else if(type === 'range') {
+            else if(type === 'range') { // 50:50
                 inventory.range--; updateInventoryUI(); playSFX('coin');
-                let rangeTeks = nomorRahasia <= 5 ? "1 sampai 5 (Bawah)" : "6 sampai 10 (Atas)";
-                tampilkanPesan(`🔍 HINT: Angka ada di rentang ${rangeTeks}`, "#38bdf8");
-                maskotBicara("Coba tebak di rentang itu!");
+                tampilkanPesan("🎯 50:50! 2 jawaban salah dihapus.", "#38bdf8");
+                maskotBicara("Aku bantu buang 2 jawaban salah!");
+                
+                // Cari 2 jawaban salah untuk disembunyikan
+                const allBtns = document.querySelectorAll(".option-btn");
+                let hiddenCount = 0;
+                for(let i=0; i<allBtns.length; i++) {
+                    if(i !== currentQuestion.a && hiddenCount < 2) {
+                        allBtns[i].classList.add("hidden-5050");
+                        hiddenCount++;
+                    }
+                }
             }
             else if(type === 'win') {
-                if(confirm("Gunakan Instan Win? Kamu akan langsung menang tanpa menebak.")) {
+                if(confirm("Gunakan Instan Win? Kamu akan langsung menang tanpa menjawab.")) {
                     inventory.win--; updateInventoryUI(); playSFX('win');
                     tebakanBenar(); 
                 }
@@ -618,12 +690,20 @@
         }
 
         function beliHint() {
-            if (gameSelesai) return;
+            if (gameSelesai || answerLocked) return;
             if (coins < 5) { tampilkanPesan("Koin kurang! (Butuh 5)", "var(--accent)"); return; }
             coins -= 5; updateCoinUI(); playSFX('coin');
-            let hint = nomorRahasia % 2 === 0 ? "GENAP" : "GANJIL";
-            tampilkanPesan(`💡 HINT: Angka rahasia adalah ${hint}`, "#38bdf8");
-            maskotBicara(`Psst, angkanya ${hint} lho!`);
+            
+            // Hint kuis: buang 1 jawaban salah (sama seperti 50:50 tapi bayar)
+            const allBtns = document.querySelectorAll(".option-btn");
+            for(let i=0; i<allBtns.length; i++) {
+                if(i !== currentQuestion.a && !allBtns[i].classList.contains("hidden-5050")) {
+                    allBtns[i].classList.add("hidden-5050");
+                    break;
+                }
+            }
+            tampilkanPesan(`💡 HINT: 1 jawaban salah telah dihapus.`, "#38bdf8");
+            maskotBicara(`Psst, aku buang 1 jawaban salah!`);
         }
         function beliNyawa() {
             if (coins < 15) { tampilkanPesan("Koin kurang! (Butuh 15)", "var(--accent)"); return; }
@@ -632,86 +712,39 @@
             tampilkanPesan("❤️ Membeli 1 Nyawa!", "var(--success)");
         }
         function skipLevel() {
-            if (gameSelesai) return;
+            if (gameSelesai || answerLocked) return;
             if (coins < 100) { tampilkanPesan("Koin kurang! Butuh 100 🪙.", "var(--accent)"); return; }
             if(confirm("Yakin mau skip level ini dengan 100 Koin?")) {
                 coins -= 100; updateCoinUI();
                 currentStreak = 0; updateStreakUI(); 
-                level++; maxNumber = 10;
+                level++;
                 document.getElementById("levelDisplay").textContent = level;
                 updateRank(); checkBossLevel(); showLevelUpEffect(); resetGameState();
                 tampilkanPesan("🚀 Level berhasil di-skip!", "var(--success)");
             }
         }
 
-        function cekTebakan() {
-            if (gameSelesai || !gameAktif) return;
-            startTimer(); totalTebakan++;
-
-            const input = document.getElementById("tebakanInput");
-            const body = document.getElementById("body");
-            const tebakan = parseInt(input.value);
-
-            input.classList.remove("hint-low", "hint-high");
-
-            if (isNaN(tebakan) || tebakan < 1 || tebakan > maxNumber) {
-                tampilkanPesan(`Masukkan angka 1 - ${maxNumber}!`, "var(--accent)"); triggerGlitch(); return;
-            }
-            if (riwayat.includes(tebakan)) {
-                tampilkanPesan(`Sudah menebak ${tebakan}!`, "var(--accent)"); triggerGlitch(); return;
-            }
-
-            riwayat.push(tebakan); renderHistory(tebakan, false);
-
-            if (tebakan === nomorRahasia) {
-                tebakanBenar();
-            } else {
-                kesempatan--; updateLivesUI(); triggerGlitch(); playSFX('wrong');
-                
-                if(kesempatan <= 0) {
-                    body.classList.add("shatter"); setTimeout(() => body.classList.remove("shatter"), 500);
-                }
-                
-                if (kesempatan === 1) document.getElementById("mascot").textContent = "🥵";
-                if (tebakan < nomorRahasia) input.classList.add("hint-low"); else input.classList.add("hint-high");
-
-                if (kesempatan > 0) {
-                    let hint = tebakan < nomorRahasia ? "KECIL ⬆️" : "BESAR ⬇️";
-                    tampilkanPesan(`Salah! Angka rahasia ${hint}.`, "var(--danger)");
-                    maskotBicara("Yah, salah. Coba lagi ya!");
-                    startTimeAttack();
-                } else {
-                    gameOver();
-                }
-            }
-            input.value = ""; input.focus(); 
-        }
-
         function tebakanBenar() {
             clearInterval(timeAttackInterval);
-            tampilkanPesan(`🎉 BENAR! Kamu hebat.`, "var(--success)");
-            renderHistory(nomorRahasia, true); triggerConfetti(); playSFX('win'); 
+            renderHistory(currentQuestion.a, true); triggerConfetti(); 
             
             const gameBox = document.getElementById("gameBox");
             gameBox.classList.add("win-punch");
             setTimeout(() => gameBox.classList.remove("win-punch"), 500);
 
-            document.getElementById("mascot").textContent = "😎";
-            maskotBicara("Yes! Tepat sekali!");
-            
             currentStreak++; updateStreakUI();
-            if(currentStreak > stats.maxStreak) { stats.maxStreak = currentStreak; localStorage.setItem('stats_v12', JSON.stringify(stats)); }
+            if(currentStreak > stats.maxStreak) { stats.maxStreak = currentStreak; localStorage.setItem('stats_v13', JSON.stringify(stats)); }
             
             akhiriGame(true);
         }
 
         function gameOver() {
-            tampilkanPesan(`💀 Game Over! Nomornya: ${nomorRahasia}`, "var(--danger)");
+            tampilkanPesan(`💀 Game Over! Kamu kehabisan nyawa.`, "var(--danger)");
             document.getElementById("mascot").textContent = "💀"; 
             maskotBicara("Game over... Aku ikut sedih.");
             currentStreak = 0; updateStreakUI(); 
             
-            stats.losses++; localStorage.setItem('stats_v12', JSON.stringify(stats));
+            stats.losses++; localStorage.setItem('stats_v13', JSON.stringify(stats));
             
             akhiriGame(false);
         }
@@ -724,20 +757,11 @@
         function tampilkanPesan(teks, warna) {
             const p = document.getElementById("pesan"); p.style.color = warna; p.textContent = teks;
         }
-        function triggerGlitch() {
-            const gb = document.getElementById("gameBox"); 
-            gb.classList.add("glitch");
-            setTimeout(() => { 
-                gb.classList.remove("glitch"); 
-                document.getElementById("tebakanInput").classList.remove("hint-low", "hint-high"); 
-            }, 400);
-        }
         function triggerConfetti() {
             confetti({ particleCount: isBossLevel ? 300 : 150, spread: 80, origin: { y: 0.6 }, colors: ['#8b5cf6', '#3b82f6', '#10b981', '#fbbf24'] });
         }
         function renderHistory(angka, isCorrect) {
-            const c = document.getElementById("history"); const b = document.createElement("span");
-            b.className = isCorrect ? "history-badge correct" : "history-badge"; b.textContent = angka; c.appendChild(b);
+            // Fungsi ini tidak dipakai lagi untuk kuis, tapi dibiarkan agar tidak error
         }
 
         function akhiriGame(isWin) {
@@ -749,7 +773,6 @@
                 document.querySelector('.music-btn').innerHTML = "🔇 MUSIK";
             }
 
-            document.getElementById("tebakBtn").style.display = "none";
             document.getElementById("hintBtn").style.display = "none";
             document.getElementById("shopBtn").style.display = "none";
             document.getElementById("skipBtn").style.display = "none";
@@ -757,7 +780,7 @@
             document.getElementById("shareBtn").style.display = "block";
 
             if (isWin) {
-                stats.wins++; localStorage.setItem('stats_v12', JSON.stringify(stats));
+                stats.wins++; localStorage.setItem('stats_v13', JSON.stringify(stats));
                 
                 let reward = isBossLevel ? 30 : 10; 
                 let bonusStreak = (currentStreak >= 3) ? 10 : ((currentStreak === 2) ? 5 : 0);
@@ -776,18 +799,18 @@
         }
 
         function simpanRekor(waktu) {
-            let rekors = JSON.parse(localStorage.getItem('leaderboard_v12')) || [];
+            let rekors = JSON.parse(localStorage.getItem('leaderboard_v13')) || [];
             rekors.push(waktu); rekors.sort((a, b) => a - b); rekors = rekors.slice(0, 5);
-            localStorage.setItem('leaderboard_v12', JSON.stringify(rekors));
+            localStorage.setItem('leaderboard_v13', JSON.stringify(rekors));
         }
 
         function nextOrReset() {
             if (document.getElementById("mascot").textContent === "😎") {
-                level++; maxNumber = 10;
+                level++;
                 document.getElementById("levelDisplay").textContent = level;
                 updateRank(); checkBossLevel(); showLevelUpEffect();
                 
-                isTimeAttack = (level >= 4);
+                isTimeAttack = (level >= 3); // Time attack mulai level 3
                 document.getElementById("timeBarContainer").style.display = isTimeAttack ? "block" : "none";
                 
                 resetGameState();
@@ -795,21 +818,14 @@
         }
 
         function resetGameState() {
-            nomorRahasia = Math.floor(Math.random() * maxNumber) + 1;
-            gameSelesai = false; riwayat = []; totalTebakan = 0;
-            kesempatan = 3; updateLivesUI();
+            gameSelesai = false; kesempatan = 3; updateLivesUI();
 
             stopTimer(); clearInterval(timeAttackInterval); timeElapsed = 0; timerStarted = false;
             document.getElementById("timer").textContent = "0";
             document.getElementById("timeBar").style.width = "100%";
             document.getElementById("timeBar").classList.remove("time-danger");
             
-            document.getElementById("tebakanInput").value = "";
-            document.getElementById("tebakanInput").classList.remove("hint-low", "hint-high");
             document.getElementById("pesan").textContent = "";
-            document.getElementById("history").innerHTML = "";
-            
-            document.getElementById("tebakBtn").style.display = "block";
             document.getElementById("hintBtn").style.display = "block";
             document.getElementById("shopBtn").style.display = "block";
             document.getElementById("skipBtn").style.display = "block";
@@ -819,20 +835,18 @@
             if(isBossLevel) document.getElementById("mascot").textContent = "😡";
             else document.getElementById("mascot").textContent = myAvatar;
             
-            document.getElementById("tebakanInput").focus();
+            loadQuestion(); // Load pertanyaan baru
             
             if (isTimeAttack) startTimeAttack();
         }
 
         function bagikanSkor() {
-            const mode = isDaily ? "Tantangan Harian" : `Level ${level} (${document.getElementById("rankDisplay").textContent})`;
-            const text = `Aku menyelesaikan ${mode} di Game Tebak Nomor v11.0 dalam waktu ${timeElapsed} detik dengan Streak ${currentStreak}! Kalahkan aku di: ${window.location.href}`;
+            const text = `Aku menyelesaikan Level ${level} di Kuis Tebak-Tebakan dalam waktu ${timeElapsed} detik! Kalahkan aku di: ${window.location.href}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         function checkAchievement(id) {
             if (achievements.includes(id)) return; 
-            
             let unlocked = false;
             if(id === 'sultan' && coins >= 1000) unlocked = true;
             else if(id === 'first_win' && stats.wins >= 1) unlocked = true;
@@ -840,7 +854,7 @@
             else if(id === 'survivor' && kesempatan === 1) unlocked = true;
             
             if(unlocked) {
-                achievements.push(id); localStorage.setItem('achievements_v12', JSON.stringify(achievements));
+                achievements.push(id); localStorage.setItem('achievements_v13', JSON.stringify(achievements));
                 playSFX('coin');
                 setTimeout(() => alert("🏅 PENCAPAIAN BARU TERBUKA! Cek di menu Pencapaian."), 1000);
             }
@@ -852,7 +866,7 @@
             const semua = [
                 { id: 'first_win', icon: '🏆', nama: 'Kemenangan Pertama', desc: 'Menang 1 kali' },
                 { id: 'sultan', icon: '💰', nama: 'Sultan', desc: 'Kumpulkan 1000 Koin' },
-                { id: 'boss_slayer', icon: '👹', nama: 'Pembantai Boss', desc: 'Selesaikan Boss Level' },
+                { id: 'boss_slayer', icon: '👹', nama: 'Pembantai Boss', desc: 'Selesaikan Boss Kuis' },
                 { id: 'survivor', icon: '🩸', nama: 'Survivor', desc: 'Menang dengan sisa 1 Nyawa' }
             ];
             semua.forEach(p => {
@@ -924,8 +938,8 @@
             }
             else {
                 const items = [
-                    { id: 'time', icon: '⏳', price: 20, name: 'Beli Waktu (+3s)' },
-                    { id: 'range', icon: '🔍', price: 30, name: 'Petunjuk Rentang' },
+                    { id: 'time', icon: '⏳', price: 20, name: 'Beli Waktu (+5s)' },
+                    { id: 'range', icon: '🎯', price: 30, name: '50:50 (Hapus 2)' },
                     { id: 'win', icon: '💎', price: 500, name: 'Instan Win' }
                 ];
                 items.forEach(it => {
@@ -940,15 +954,15 @@
 
         function prosesAvatar(icon, price) {
             if (ownedAvatars.includes(icon)) {
-                myAvatar = icon; localStorage.setItem('myAvatar_v12', icon);
+                myAvatar = icon; localStorage.setItem('myAvatar_v13', icon);
                 document.getElementById("mascot").textContent = myAvatar;
                 gantiTab('avatar');
             } else {
                 if (coins >= price) {
                     if(confirm(`Beli avatar ini seharga ${price} koin?`)) {
                         coins -= price; updateCoinUI();
-                        ownedAvatars.push(icon); localStorage.setItem('ownedAvatars_v12', JSON.stringify(ownedAvatars));
-                        myAvatar = icon; localStorage.setItem('myAvatar_v12', icon);
+                        ownedAvatars.push(icon); localStorage.setItem('ownedAvatars_v13', JSON.stringify(ownedAvatars));
+                        myAvatar = icon; localStorage.setItem('myAvatar_v13', icon);
                         document.getElementById("mascot").textContent = myAvatar;
                         playSFX('coin'); alert("✅ Avatar dibeli!"); gantiTab('avatar');
                     }
@@ -958,14 +972,14 @@
 
         function prosesTema(id, price) {
             if (ownedThemes.includes(id)) {
-                currentTheme = id; localStorage.setItem('myTheme_v12', id);
+                currentTheme = id; localStorage.setItem('myTheme_v13', id);
                 applyTheme(currentTheme); gantiTab('tema');
             } else {
                 if (coins >= price) {
                     if(confirm(`Beli tema ini seharga ${price} koin?`)) {
                         coins -= price; updateCoinUI();
-                        ownedThemes.push(id); localStorage.setItem('ownedThemes_v12', JSON.stringify(ownedThemes));
-                        currentTheme = id; localStorage.setItem('myTheme_v12', id);
+                        ownedThemes.push(id); localStorage.setItem('ownedThemes_v13', JSON.stringify(ownedThemes));
+                        currentTheme = id; localStorage.setItem('myTheme_v13', id);
                         applyTheme(currentTheme); playSFX('coin'); alert("✅ Tema dibeli!"); gantiTab('tema');
                     }
                 } else alert("❌ Koin tidak cukup!");
@@ -985,7 +999,7 @@
         function bukaLeaderboard() {
             document.getElementById("modalLeaderboard").style.display = "flex";
             const list = document.getElementById("listLeaderboard"); list.innerHTML = "";
-            let rekors = JSON.parse(localStorage.getItem('leaderboard_v12')) || [];
+            let rekors = JSON.parse(localStorage.getItem('leaderboard_v13')) || [];
             
             if(rekors.length === 0) {
                 list.innerHTML = "<p style='color:#94a3b8'>Belum ada rekor. Ayo bermain!</p>";
@@ -1004,11 +1018,10 @@
         // ==== LUCKY SPIN LOGIC ====
         function initWheel() {
             const wheel = document.getElementById("wheel");
-            // Generate text di dalam roda
             spinPrizes.forEach((prize, i) => {
                 let textEl = document.createElement("div");
                 textEl.className = "wheel-text";
-                textEl.style.transform = `rotate(${i * 45 + 22.5}deg)`; // Bagi 360 menjadi 8 bagian
+                textEl.style.transform = `rotate(${i * 45 + 22.5}deg)`;
                 textEl.textContent = prize.text;
                 wheel.appendChild(textEl);
             });
@@ -1032,29 +1045,20 @@
             document.getElementById("btnSpinAction").disabled = true;
             playSFX('coin');
 
-            // Tentukan hadiah acak (0-7)
             const randomIndex = Math.floor(Math.random() * spinPrizes.length);
             const prize = spinPrizes[randomIndex];
 
-            // Hitung derajat putaran (minimal 5 putaran + derajat hadiah)
             const baseSpins = 360 * 5;
-            // Karena text dimulai dari derajat 0 (jam 12), kita harus menyesuaikan
-            // Target harus berada di bawah pointer (jam 12)
-            // Prize 0 ada di 0-45 deg. Prize 1 di 45-90 deg, dst.
-            // Kita ingin prize X berhenti di 0 derajat (pointer).
-            // Jadi kita putar balik sebesar derajat tengah prize tersebut.
             const prizeAngle = (randomIndex * 45) + 22.5;
             const targetAngle = baseSpins - prizeAngle;
 
             const wheel = document.getElementById("wheel");
             wheel.style.transform = `rotate(${targetAngle}deg)`;
 
-            // Tunggu animasi selesai (4 detik)
             setTimeout(() => {
                 isSpinning = false;
                 document.getElementById("btnSpinAction").disabled = false;
 
-                // Berikan hadiah
                 let alertMsg = "";
                 if(prize.type === 'coin') {
                     coins += prize.val; updateCoinUI(); playSFX('coin');
@@ -1063,7 +1067,7 @@
                 } 
                 else if(prize.type === 'hint') {
                     inventory.range++; updateInventoryUI(); playSFX('win');
-                    alertMsg = `Selamat! Kamu mendapatkan 1x Petunjuk Rentang!`;
+                    alertMsg = `Selamat! Kamu mendapatkan 1x Petunjuk 50:50!`;
                 }
                 else if(prize.type === 'life') {
                     if(kesempatan < 5) { kesempatan++; updateLivesUI(); }
@@ -1081,7 +1085,6 @@
 
                 alert(alertMsg);
                 
-                // Reset roda ke posisi semula tanpa animasi (biar bisa diputar lagi)
                 wheel.style.transition = 'none';
                 wheel.style.transform = `rotate(0deg)`;
                 setTimeout(() => { wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)'; }, 100);
@@ -1089,10 +1092,6 @@
                 tutupModal('modalSpin');
             }, 4000);
         }
-
-        document.getElementById("tebakanInput").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") { event.preventDefault(); cekTebakan(); }
-        });
     </script>
 </body>
 </html>
