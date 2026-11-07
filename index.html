@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Tebak Nomor v10.6 - Perfect Edition</title>
+    <title>Game Tebak Nomor v11.0 - Lucky Spin</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -16,8 +16,6 @@
         }
         body.theme-matrix { --bg-main: #022c22; --primary: #10b981; --primary-glow: rgba(16, 185, 129, 0.6); --accent: #34d399; --text-main: #ecfdf5; }
         body.theme-cyber { --bg-main: #1e1e24; --primary: #fbbf24; --primary-glow: rgba(251, 191, 36, 0.6); --accent: #f59e0b; --text-main: #fef3c7; --danger: #f97316; }
-        
-        /* TEMA BOSS: MERAH MENYALA */
         body.theme-boss { --bg-main: #450a0a; --primary: #ef4444; --primary-glow: rgba(239, 68, 68, 0.8); --accent: #fbbf24; --text-main: #fef2f2; --success: #10b981; }
 
         body {
@@ -48,7 +46,6 @@
             20%, 40%, 60%, 80% { transform: translate(8px, -5px) rotate(1.5deg); }
         }
 
-        /* CONTAINER & ANIMASI MASUK */
         .game-container {
             background: var(--bg-main); border: 4px solid var(--primary);
             box-shadow: 0 0 0 4px var(--bg-dark), 0 0 30px var(--primary-glow);
@@ -75,7 +72,6 @@
         #speechBubble::after { content: ''; position: absolute; bottom: -8px; left: 10px; border-width: 8px 8px 0; border-style: solid; border-color: #fff transparent transparent transparent; }
         #speechBubble.show { opacity: 1; top: -30px; transform: scale(1.1); }
 
-        /* START SCREEN */
         #startScreen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); z-index: 20; display: flex; flex-direction: column;
             justify-content: center; align-items: center; border-radius: 6px;
@@ -131,6 +127,7 @@
         .shop-btn { background: #ec4899; color: white; }
         .music-btn { background: #38bdf8; }
         .skip-btn { background: #a855f7; color: white; }
+        .spin-btn { background: #f97316; color: white; }
         .share-btn { background: #25D366; display: none; margin-top: 10px; }
         #resetBtn { background: var(--danger); color: white; display: none; }
 
@@ -161,7 +158,39 @@
         .shop-btn-buy { width: auto; padding: 5px 10px; font-size: 10px; box-shadow: 0 2px 0 var(--bg-dark);}
         .achievement-locked { filter: grayscale(100%); opacity: 0.5; }
 
-        /* RESPONSIVE UNTUK HP */
+        /* === LUCKY SPIN WHEEL === */
+        .wheel-container { position: relative; width: 250px; height: 250px; margin: 20px auto; }
+        .wheel { 
+            width: 100%; height: 100%; border-radius: 50%; border: 5px solid var(--accent); 
+            background: conic-gradient(
+                var(--danger) 0deg 45deg, 
+                var(--success) 45deg 90deg, 
+                var(--primary) 90deg 135deg, 
+                #f97316 135deg 180deg, 
+                #06b6d4 180deg 225deg, 
+                #ec4899 225deg 270deg, 
+                #eab308 270deg 315deg, 
+                #64748b 315deg 360deg
+            );
+            transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        .wheel-text {
+            position: absolute; top: 50%; left: 50%; width: 50%; height: 20px;
+            transform-origin: left center; font-size: 10px; font-weight: bold; color: white;
+            display: flex; align-items: center; padding-left: 20px; text-shadow: 1px 1px 2px #000;
+        }
+        .wheel-pointer {
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid var(--accent);
+            z-index: 5; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+        .spin-center {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 40px; height: 40px; background: var(--bg-dark); border: 3px solid var(--accent); border-radius: 50%;
+            z-index: 4; display: flex; justify-content: center; align-items: center; font-size: 16px;
+        }
+
         @media (max-height: 750px) {
             .game-container { transform: scale(0.85); transform-origin: center; }
             #mascot { font-size: 40px; }
@@ -173,6 +202,10 @@
 <body id="body">
     <div class="crt-overlay"></div>
     <div id="levelUpText">LEVEL UP!</div>
+
+    <audio id="bgm" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-games-in-the-arcade-2439.mp3" type="audio/mpeg">
+    </audio>
 
     <div class="game-container" id="gameBox">
         
@@ -233,8 +266,9 @@
         </div>
         
         <div class="btn-group">
-            <button class="music-btn" onclick="toggleMusic()" style="width: 50%;">🔇 MUSIK</button>
-            <button class="skip-btn" onclick="bukaLeaderboard()" style="margin-top:0; width: 50%; background:#fbbf24; color:#000;">🏆 REKOR</button>
+            <button class="music-btn" onclick="toggleMusic()" style="width: 33%;">🔇 MUSIK</button>
+            <button class="spin-btn" onclick="bukaSpin()" style="width: 34%;">🎰 SPIN</button>
+            <button class="skip-btn" onclick="bukaLeaderboard()" style="margin-top:0; width: 33%; background:#fbbf24; color:#000;">🏆 REKOR</button>
         </div>
 
         <button id="resetBtn" onclick="nextOrReset()" style="margin-top: 10px;">LANJUT</button>
@@ -275,6 +309,25 @@
         </div>
     </div>
 
+    <!-- MODAL LUCKY SPIN -->
+    <div class="modal" id="modalSpin">
+        <div class="modal-content" style="width: 320px;">
+            <h3 style="color: var(--accent); font-family: 'Press Start 2P'; font-size: 14px;">LUCKY SPIN</h3>
+            <p style="font-size: 12px; margin-top:5px;">Biaya: 50 🪙</p>
+            
+            <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <div class="spin-center">🎰</div>
+                <div class="wheel" id="wheel">
+                    <!-- Text akan di-generate oleh JS -->
+                </div>
+            </div>
+
+            <button id="btnSpinAction" onclick="spinWheel()" style="background: var(--accent); color: black; margin-top:10px;">PUTAR RODA!</button>
+            <button onclick="tutupModal('modalSpin')" style="margin-top: 10px; background:var(--danger); color:white;">TUTUP</button>
+        </div>
+    </div>
+
     <script>
         // ==== VARIABEL GLOBAL ====
         let level = parseInt(localStorage.getItem('saveLevel_v12')) || 1;
@@ -297,6 +350,36 @@
         let isTimeAttack = false;
         let gameAktif = false;
         let isBossLevel = false;
+        let isSpinning = false;
+
+        // ==== LUCKY SPIN DATA ====
+        const spinPrizes = [
+            { text: "+10", type: "coin", val: 10 },
+            { text: "+50", type: "coin", val: 50 },
+            { text: "+100", type: "coin", val: 100 },
+            { text: "Hint", type: "hint", val: 1 },
+            { text: "Nyawa", type: "life", val: 1 },
+            { text: "Instan", type: "win", val: 1 },
+            { text: "ZONK", type: "zonk", val: 0 },
+            { text: "+5", type: "coin", val: 5 }
+        ];
+
+        // ==== MUSIK PLAYER ====
+        let bgm = document.getElementById('bgm');
+        let isPlayingMusic = false;
+
+        function toggleMusic() {
+            if (bgm.paused) {
+                bgm.volume = 0.4; 
+                bgm.play();
+                document.querySelector('.music-btn').innerHTML = "🔊 MUSIK";
+                isPlayingMusic = true;
+            } else {
+                bgm.pause();
+                document.querySelector('.music-btn').innerHTML = "🔇 MUSIK";
+                isPlayingMusic = false;
+            }
+        }
 
         // ==== ANIMASI MASKOT ====
         function clickMascot() {
@@ -305,7 +388,7 @@
             void mascot.offsetWidth; 
             mascot.classList.add("mascot-bounce");
             
-            const dialog = ["Ayo semangat!", "Kamu pasti bisa!", "Jangan menyerah!", "Tebak yang benar ya!", "Hoki hari ini!"];
+            const dialog = ["Ayo semangat!", "Kamu pasti bisa!", "Jangan menyerah!", "Tebak yang benar ya!", "Hoki hari ini!", "Coba Spin dong!"];
             maskotBicara(dialog[Math.floor(Math.random() * dialog.length)]);
             
             if(Math.random() > 0.8) bagikanSkor();
@@ -317,7 +400,6 @@
             el.className = "floating-text";
             el.textContent = text;
             el.style.color = color;
-            // Kalkulasi posisi agar tidak keluar layar
             let leftPos = (window.innerWidth / 2) + (Math.random() * 100 - 50);
             if(leftPos < 50) leftPos = 50;
             if(leftPos > window.innerWidth - 50) leftPos = window.innerWidth - 50;
@@ -341,13 +423,13 @@
             const container = document.getElementById("gameBox");
             if (isBossLevel) {
                 container.classList.add("boss-level");
-                document.body.classList.add("theme-boss"); // Tema jadi merah
+                document.body.classList.add("theme-boss");
                 document.getElementById("gameTitle").textContent = "👹 BOSS LEVEL 👹";
                 document.getElementById("mascot").textContent = "😡";
                 document.getElementById("instruksi").textContent = "Kalahkan Boss! Waktu lebih cepat, hadiah 3x lipat!";
             } else {
                 container.classList.remove("boss-level");
-                applyTheme(currentTheme); // Kembalikan tema normal
+                applyTheme(currentTheme); 
                 document.getElementById("gameTitle").textContent = "Tebak Nomor";
                 document.getElementById("mascot").textContent = myAvatar;
                 document.getElementById("instruksi").innerHTML = `Tebak nomor antara <strong>1 sampai 10</strong>`;
@@ -380,44 +462,18 @@
             updateCoinUI(); updateInventoryUI();
             checkBossLevel();
             resetGameState();
+            initWheel();
         }
 
-        // Mendengarkan tombol ENTER di Start Screen
         document.addEventListener('keydown', function(e) {
             if(e.key === 'Enter' && !gameAktif) {
                 mulaiGame();
             }
         });
 
-        // ==== AUDIO ====
-        let audioCtx, musicInterval, isPlayingMusic = false;
-        const melody = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
-        let noteIndex = 0;
-
-        function toggleMusic() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (isPlayingMusic) {
-                clearInterval(musicInterval);
-                document.querySelector('.music-btn').innerHTML = "🔇 MUSIK";
-            } else {
-                musicInterval = setInterval(playNote, 300);
-                document.querySelector('.music-btn').innerHTML = "🔊 MUSIK";
-            }
-            isPlayingMusic = !isPlayingMusic;
-        }
-
-        function playNote() {
-            if (!isPlayingMusic) return;
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'square'; osc.frequency.value = melody[noteIndex];
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.25);
-            noteIndex = (noteIndex + 1) % melody.length;
-        }
-
+        // ==== SFX (EFEK SUARA KLIK) ====
         function playSFX(type) {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
             
@@ -487,7 +543,6 @@
 
             timeAttackInterval = setInterval(() => {
                 timeLeft -= 0.1;
-                // BUG FIX: Batasi lebar maksimal 100%
                 let persen = Math.min((timeLeft / maxTime) * 100, 100);
                 if(persen < 0) persen = 0;
                 bar.style.width = persen + "%";
@@ -688,9 +743,10 @@
         function akhiriGame(isWin) {
             gameSelesai = true; stopTimer(); clearInterval(timeAttackInterval);
             
-            // BUG FIX: Matikan musik otomatis saat game over
             if(isPlayingMusic) {
-                toggleMusic();
+                bgm.pause();
+                isPlayingMusic = false;
+                document.querySelector('.music-btn').innerHTML = "🔇 MUSIK";
             }
 
             document.getElementById("tebakBtn").style.display = "none";
@@ -770,7 +826,7 @@
 
         function bagikanSkor() {
             const mode = isDaily ? "Tantangan Harian" : `Level ${level} (${document.getElementById("rankDisplay").textContent})`;
-            const text = `Aku menyelesaikan ${mode} di Game Tebak Nomor v10.6 dalam waktu ${timeElapsed} detik dengan Streak ${currentStreak}! Kalahkan aku di: ${window.location.href}`;
+            const text = `Aku menyelesaikan ${mode} di Game Tebak Nomor v11.0 dalam waktu ${timeElapsed} detik dengan Streak ${currentStreak}! Kalahkan aku di: ${window.location.href}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
@@ -943,6 +999,95 @@
                     </div>`;
                 });
             }
+        }
+
+        // ==== LUCKY SPIN LOGIC ====
+        function initWheel() {
+            const wheel = document.getElementById("wheel");
+            // Generate text di dalam roda
+            spinPrizes.forEach((prize, i) => {
+                let textEl = document.createElement("div");
+                textEl.className = "wheel-text";
+                textEl.style.transform = `rotate(${i * 45 + 22.5}deg)`; // Bagi 360 menjadi 8 bagian
+                textEl.textContent = prize.text;
+                wheel.appendChild(textEl);
+            });
+        }
+
+        function bukaSpin() {
+            if(isSpinning) return;
+            document.getElementById("modalSpin").style.display = "flex";
+        }
+
+        function spinWheel() {
+            if(isSpinning) return;
+            if(coins < 50) {
+                alert("❌ Koin tidak cukup! Butuh 50 Koin.");
+                return;
+            }
+            
+            coins -= 50;
+            updateCoinUI();
+            isSpinning = true;
+            document.getElementById("btnSpinAction").disabled = true;
+            playSFX('coin');
+
+            // Tentukan hadiah acak (0-7)
+            const randomIndex = Math.floor(Math.random() * spinPrizes.length);
+            const prize = spinPrizes[randomIndex];
+
+            // Hitung derajat putaran (minimal 5 putaran + derajat hadiah)
+            const baseSpins = 360 * 5;
+            // Karena text dimulai dari derajat 0 (jam 12), kita harus menyesuaikan
+            // Target harus berada di bawah pointer (jam 12)
+            // Prize 0 ada di 0-45 deg. Prize 1 di 45-90 deg, dst.
+            // Kita ingin prize X berhenti di 0 derajat (pointer).
+            // Jadi kita putar balik sebesar derajat tengah prize tersebut.
+            const prizeAngle = (randomIndex * 45) + 22.5;
+            const targetAngle = baseSpins - prizeAngle;
+
+            const wheel = document.getElementById("wheel");
+            wheel.style.transform = `rotate(${targetAngle}deg)`;
+
+            // Tunggu animasi selesai (4 detik)
+            setTimeout(() => {
+                isSpinning = false;
+                document.getElementById("btnSpinAction").disabled = false;
+
+                // Berikan hadiah
+                let alertMsg = "";
+                if(prize.type === 'coin') {
+                    coins += prize.val; updateCoinUI(); playSFX('coin');
+                    alertMsg = `Selamat! Kamu mendapatkan ${prize.val} Koin!`;
+                    showFloatingText(`+${prize.val} 🪙`, "var(--accent)");
+                } 
+                else if(prize.type === 'hint') {
+                    inventory.range++; updateInventoryUI(); playSFX('win');
+                    alertMsg = `Selamat! Kamu mendapatkan 1x Petunjuk Rentang!`;
+                }
+                else if(prize.type === 'life') {
+                    if(kesempatan < 5) { kesempatan++; updateLivesUI(); }
+                    playSFX('win');
+                    alertMsg = `Selamat! Kamu mendapatkan 1x Nyawa Tambahan!`;
+                }
+                else if(prize.type === 'win') {
+                    inventory.win++; updateInventoryUI(); playSFX('win');
+                    alertMsg = `WOW! Kamu mendapatkan Instan Win!`;
+                }
+                else {
+                    playSFX('wrong');
+                    alertMsg = `Yah, ZONK! Kamu tidak mendapatkan apa-apa.`;
+                }
+
+                alert(alertMsg);
+                
+                // Reset roda ke posisi semula tanpa animasi (biar bisa diputar lagi)
+                wheel.style.transition = 'none';
+                wheel.style.transform = `rotate(0deg)`;
+                setTimeout(() => { wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)'; }, 100);
+
+                tutupModal('modalSpin');
+            }, 4000);
         }
 
         document.getElementById("tebakanInput").addEventListener("keypress", function(event) {
